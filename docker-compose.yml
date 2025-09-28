@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: tincho-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gustavo
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_DB: tincho
+    ports:
+      - "5479:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gustavo -d tincho"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Uncomment and configure pgAdmin if needed
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: pgadmin
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@example.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin123
+  #   ports:
+  #     - "5050:80"
+  #   depends_on:
+  #     - db
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
