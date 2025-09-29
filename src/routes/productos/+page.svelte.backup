@@ -1,0 +1,879 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+
+  // Type definitions based on Prisma schema
+  interface Product {
+    id: string;
+    slug: string;
+    name: string;
+    description?: string;
+    status: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
+    seoTitle?: string;
+    seoDesc?: string;
+    createdAt: string;
+    updatedAt: string;
+    // Related data from joins
+    variants?: ProductVariant[];
+    images?: ProductImage[];
+    categories?: ProductCategory[];
+  }
+
+  interface ProductVariant {
+    id: string;
+    productId: string;
+    sku: string;
+    priceCents: number; // Price in cents
+    currency: string;
+    stock: number;
+    attributes?: any; // JSON attributes like color, size
+    isDefault: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }
+
+  interface ProductImage {
+    id: string;
+    productId: string;
+    url: string;
+    alt?: string;
+    position: number;
+  }
+
+  interface ProductCategory {
+    id: string;
+    name: string;
+    slug: string;
+  }
+
+  // Frontend-friendly product type (combines Product + ProductVariant)
+  interface ProductDisplay {
+    id: string;
+    _id?: string; // For compatibility with existing code
+    name: string;
+    price: number; // Price in decimal format for display
+    priceCents: number; // Original cents from DB
+    category?: string;
+    description?: string;
+    stock: number;
+    isNew?: boolean; // Calculated field
+    rating?: number; // If you add this later
+    images?: string[];
+    createdAt?: string | Date;
+    // Additional fields from variants
+    sku?: string;
+    currency?: string;
+    variants?: ProductVariant[];
+  }
+
+  // State
+  let products: ProductDisplay[] = [];
+  let loading = true;
+  let error: string | null = null;
+
+  // Filter states
+  let searchTerm = '';
+  let selectedCategory = 'all';
+  let sortBy = 'featured';
+  let priceRange = [0, 20000]; // Now represents cents (0 to 20000 cents = $0 to $200)
+  let showFilters = false;
+  let showOnlyNew = false;
+  let inStockOnly = false;
+  let currentPage = 1;
+  const itemsPerPage = 9;
+
+  // Fetch products from API
+  async function fetchProducts() {
+    try {
+      loading = true;
+      error = null;
+      const response = await fetch('/api/products');
+      if (!response.ok) throw new Error('Failed to load products');
+      const data = await response.json();
+      products = Array.isArray(data) ? data : [];
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('Error fetching products:', err);
+    } finally {
+      loading = false;
+    }
+  }
+
+  // Cargar productos al montar el componente
+  onMount(() => {
+    fetchProducts();
+  });
+
+  // Get unique categories
+  $: categories = ['all', ...new Set(products.map(p => p.category).filter((c): c is string => !!c))];
+
+  // Format price
+  function formatPrice(priceCents: number): string {
+    const price = priceCents / 100; // Convert cents to decimal
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 2
+    }).format(price);
+  }
+
+  // Filter and sort products
+  $: filteredProducts = ((): ProductDisplay[] => {
+    if (!products.length) return [];
+
+    // Filter products
+    let filtered: ProductDisplay[] = products.filter((product: ProductDisplay) => {
+      try {
+        const searchLower = searchTerm.toLowerCase();
+        const nameMatch = product.name?.toLowerCase().includes(searchLower) ?? false;
+        const categoryMatch = product.category?.toLowerCase().includes(searchLower) ?? false;
+
+        const matchesSearch = !searchTerm || nameMatch || categoryMatch;
+        const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+        const matchesPrice = product.priceCents >= priceRange[0] * 100 && product.priceCents <= priceRange[1] * 100;
+        const matchesStock = !inStockOnly || (product.stock ?? 0) > 0;
+        const isNew = product.isNew ||
+                     (product.createdAt &&
+                      new Date(product.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+        const matchesNew = !showOnlyNew || isNew;
+
+        return matchesSearch && matchesCategory && matchesPrice && matchesStock && matchesNew;
+      } catch (err) {
+        console.error('Error filtering product:', product, err);
+        return false;
+      }
+    });
+
+    // Sort products
+    return [...filtered].sort((a: ProductDisplay, b: ProductDisplay): number => {
+      switch (sortBy) {
+        case 'price-asc':
+          return (a.priceCents || 0) - (b.priceCents || 0);
+        case 'price-desc':
+          return (b.priceCents || 0) - (a.priceCents || 0);
+        case 'rating':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'featured':
+        default:
+          // For featured, sort by newest first, then by name
+          const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (aDate !== bDate) return bDate - aDate;
+          return a.name.localeCompare(b.name);
+      }
+    });
+  })();
+
+  function resetFilters() {
+    searchTerm = '';
+    selectedCategory = 'all';
+    sortBy = 'featured';
+    priceRange = [0, 20000]; // Reset to cents
+    inStockOnly = false;
+    showOnlyNew = false;
+    currentPage = 1;
+  }
+
+  // Toggle filters visibility on mobile
+  function toggleFilters() {
+    showFilters = !showFilters;
+  }
+</script>
+
+<svelte:head>
+  <title>Productos - Tienda Online</title>
+  <meta name="description" content="Explora nuestra amplia selección de productos" />
+</svelte:head>
+
+<main class="py-8 bg-gray-50 min-h-screen">
+  <div class="container mx-auto px-4">
+    <!-- Encabezado -->
+    <div class="mb-8">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">Nuestros Productos</h1>
+          <p class="text-gray-600">Descubre nuestra selección de productos</p>
+        </div>
+        <a
+          href="/productos/admin"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Panel Admin
+        </a>
+      </div>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-6">
+      <!-- Botón de filtros para móviles -->
+      <div class="md:hidden mb-4">
+        <button
+          on:click={toggleFilters}
+          class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+          </svg>
+          Filtros
+        </button>
+      </div>
+
+      <!-- Barra lateral de filtros -->
+      <div class={`${showFilters ? 'block' : 'hidden'} md:block w-full md:w-64 flex-shrink-0 bg-white p-4 rounded-lg shadow-sm h-fit`}>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-medium">Filtros</h2>
+          <button
+            on:click={resetFilters}
+            class="text-sm text-blue-600 hover:text-blue-800"
+          >
+            Restablecer
+          </button>
+        </div>
+
+        <!-- Búsqueda -->
+        <div class="mb-6">
+          <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+          <div class="relative">
+            <input
+              type="text"
+              id="search"
+              bind:value={searchTerm}
+              placeholder="Buscar productos..."
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+            />
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categorías -->
+        <div class="mb-6">
+          <h3 class="text-sm font-medium text-gray-700 mb-2">Categorías</h3>
+          <div class="space-y-2">
+            {#each categories as category}
+              <div class="flex items-center">
+                <input
+                  id={`category-${category}`}
+                  name="category"
+                  type="radio"
+                  value={category}
+                  bind:group={selectedCategory}
+                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <label for={`category-${category}`} class="ml-2 text-sm text-gray-700 capitalize">
+                  {category}
+                </label>
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <!-- Rango de precios -->
+        <div class="mb-6">
+          <h3 class="text-sm font-medium text-gray-700 mb-2">Rango de precios</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between text-sm text-gray-500">
+              <span>{formatPrice(priceRange[0])}</span>
+              <span>{formatPrice(priceRange[1])}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="20000"
+              step="100"
+              bind:value={priceRange[0]}
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <input
+              type="range"
+              min="0"
+              max="20000"
+              step="100"
+              bind:value={priceRange[1]}
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+        </div>
+
+        <!-- Filtros de estado -->
+        <div class="space-y-4">
+          <div class="flex items-center">
+            <input
+              id="in-stock"
+              type="checkbox"
+              bind:checked={inStockOnly}
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label for="in-stock" class="ml-2 text-sm text-gray-700">
+              Solo en stock
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="new-products"
+              type="checkbox"
+              bind:checked={showOnlyNew}
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label for="new-products" class="ml-2 text-sm text-gray-700">
+              Solo productos nuevos
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de productos -->
+      <div class="flex-1">
+        <!-- Ordenamiento y contador -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <p class="text-sm text-gray-600">
+            Mostrando <span class="font-medium">{filteredProducts.length}</span> de <span class="font-medium">{products.length}</span> productos
+          </p>
+          <div class="w-full sm:w-auto">
+            <label for="sort" class="sr-only">Ordenar por</label>
+            <select
+              id="sort"
+              bind:value={sortBy}
+              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            >
+              <option value="featured">Destacados</option>
+              <option value="price-asc">Precio: Menor a mayor</option>
+              <option value="price-desc">Precio: Mayor a menor</option>
+              <option value="rating">Mejor valorados</option>
+            </select>
+          </div>
+        </div>
+
+        {#if loading}
+          <div class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        {:else if error}
+          <div class="bg-red-50 border-l-4 border-red-400 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        {:else if filteredProducts.length === 0}
+          <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No se encontraron productos</h3>
+            <p class="mt-1 text-sm text-gray-500">Intenta ajustar tus filtros de búsqueda.</p>
+            <div class="mt-6">
+              <button
+                on:click={resetFilters}
+                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Restablecer filtros
+              </button>
+            </div>
+          </div>
+        {:else}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {#each filteredProducts as product (product.id || product._id)}
+              <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col h-full">
+                <div class="relative">
+                  {#if product.images && product.images.length > 0}
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      class="w-full h-48 object-cover"
+                    />
+                  {:else}
+                    <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
+                      <svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  {/if}
+
+                  {#if product.isNew}
+                    <div class="absolute top-2 right-2">
+                      <span class="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                        ¡Nuevo!
+                      </span>
+                    </div>
+                  {/if}
+
+                  {#if product.rating !== undefined}
+                    <div class="absolute top-2 left-2 bg-yellow-400 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">
+                      {product.rating.toFixed(1)} ★
+                    </div>
+                  {/if}
+                </div>
+
+                <div class="p-4 flex flex-col flex-grow">
+                  <div class="flex-grow">
+                    {#if product.category}
+                      <p class="text-sm text-gray-500">{product.category}</p>
+                    {/if}
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
+                    <p class="text-xl font-bold text-blue-600">{formatPrice(product.priceCents)}</p>
+
+                    {#if product.description}
+                      <p class="mt-2 text-sm text-gray-600 line-clamp-2">{product.description}</p>
+                    {/if}
+                  </div>
+
+                  <button
+                    class={`mt-4 w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${product.stock > 0 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                    disabled={product.stock <= 0}
+                    on:click={() => product.stock > 0 && console.log('Add to cart', product._id || product.id)}
+                  >
+                    {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
+                  </button>
+                </div>
+              </div>
+            {/each}
+          </div>
+
+          <!-- Paginación (opcional) -->
+          {#if filteredProducts.length > 0}
+            <div class="mt-8 flex justify-center">
+              <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  disabled={currentPage === 1}
+                  on:click={() => currentPage > 1 && (currentPage -= 1)}
+                >
+                  <span class="sr-only">Anterior</span>
+                  <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+
+                {#each Array(Math.ceil(filteredProducts.length / itemsPerPage)).fill(0) as _, i}
+                  <button
+                    class={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === i + 1 ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}`}
+                    on:click={() => currentPage = i + 1}
+                  >
+                    {i + 1}
+                  </button>
+                {/each}
+
+                <button
+                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  disabled={currentPage * itemsPerPage >= filteredProducts.length}
+                  on:click={() => currentPage += 1}
+                >
+                  <span class="sr-only">Siguiente</span>
+                  <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </nav>
+            </div>
+          {/if}
+        {/if}
+      </div>
+    </div>
+  </div>
+</main>
+
+<style>
+  /* Estilos para los controles de rango */
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 5px;
+    background: #e5e7eb;
+    border-radius: 5px;
+    background-image: linear-gradient(#3b82f6, #3b82f6);
+    background-size: 50% 100%;
+    background-repeat: no-repeat;
+  }
+
+  /* Para Chrome y Safari */
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 0 2px 0 #555;
+  }
+
+  /* Para Firefox */
+  input[type=range]::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 0 2px 0 #555;
+    border: none;
+  }
+
+  /* Para IE */
+  input[type=range]::-ms-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 0 2px 0 #555;
+  }
+
+  /* Para el recorte de texto */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    /* Standard property for better compatibility */
+    line-clamp: 2;
+    /* Fallback for browsers that support box-orient but not line-clamp */
+    box-orient: vertical;
+  }
+</style>
+
+
+    <div class="flex flex-col md:flex-row gap-6">
+      <!-- Botón de filtros para móviles -->
+      <div class="md:hidden mb-4">
+        <button 
+          on:click={toggleFilters}
+          class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+          </svg>
+          Filtros
+        </button>
+      </div>
+
+      <!-- Barra lateral de filtros -->
+      <div class={`${showFilters ? 'block' : 'hidden'} md:block w-full md:w-64 flex-shrink-0 bg-white p-4 rounded-lg shadow-sm h-fit`}>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-medium">Filtros</h2>
+          <button 
+            on:click={resetFilters}
+            class="text-sm text-blue-600 hover:text-blue-800"
+          >
+            Restablecer
+          </button>
+        </div>
+
+        <!-- Búsqueda -->
+        <div class="mb-6">
+          <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
+          <div class="relative">
+            <input
+              type="text"
+              id="search"
+              bind:value={searchTerm}
+              placeholder="Buscar productos..."
+              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+            />
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categorías -->
+        <div class="mb-6">
+          <h3 class="text-sm font-medium text-gray-700 mb-2">Categorías</h3>
+          <div class="space-y-2">
+            {#each categories as category}
+              <div class="flex items-center">
+                <input
+                  id={`category-${category}`}
+                  name="category"
+                  type="radio"
+                  value={category}
+                  bind:group={selectedCategory}
+                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <label for={`category-${category}`} class="ml-2 text-sm text-gray-700 capitalize">
+                  {category}
+                </label>
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <!-- Rango de precios -->
+        <div class="mb-6">
+          <h3 class="text-sm font-medium text-gray-700 mb-2">Rango de precios</h3>
+          <div class="space-y-4">
+            <div class="flex justify-between text-sm text-gray-500">
+              <span>{formatPrice(priceRange[0])}</span>
+              <span>{formatPrice(priceRange[1])}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="20000"
+              step="100"
+              bind:value={priceRange[0]}
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            <input
+              type="range"
+              min="0"
+              max="20000"
+              step="100"
+              bind:value={priceRange[1]}
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+        </div>
+
+        <!-- Filtros de estado -->
+        <div class="space-y-4">
+          <div class="flex items-center">
+            <input
+              id="in-stock"
+              type="checkbox"
+              bind:checked={inStockOnly}
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label for="in-stock" class="ml-2 text-sm text-gray-700">
+              Solo en stock
+            </label>
+          </div>
+          <div class="flex items-center">
+            <input
+              id="new-products"
+              type="checkbox"
+              bind:checked={showOnlyNew}
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label for="new-products" class="ml-2 text-sm text-gray-700">
+              Solo productos nuevos
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de productos -->
+      <div class="flex-1">
+        <!-- Ordenamiento y contador -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <p class="text-sm text-gray-600">
+            Mostrando <span class="font-medium">{filteredProducts.length}</span> de <span class="font-medium">{products.length}</span> productos
+          </p>
+          <div class="w-full sm:w-auto">
+            <label for="sort" class="sr-only">Ordenar por</label>
+            <select
+              id="sort"
+              bind:value={sortBy}
+              class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            >
+              <option value="featured">Destacados</option>
+              <option value="price-asc">Precio: Menor a mayor</option>
+              <option value="price-desc">Precio: Mayor a menor</option>
+              <option value="rating">Mejor valorados</option>
+            </select>
+          </div>
+        </div>
+
+        {#if loading}
+          <div class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        {:else if error}
+          <div class="bg-red-50 border-l-4 border-red-400 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        {:else if filteredProducts.length === 0}
+          <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No se encontraron productos</h3>
+            <p class="mt-1 text-sm text-gray-500">Intenta ajustar tus filtros de búsqueda.</p>
+            <div class="mt-6">
+              <button
+                on:click={resetFilters}
+                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Restablecer filtros
+              </button>
+            </div>
+          </div>
+        {:else}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {#each filteredProducts as product (product.id || product._id)}
+              <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col h-full">
+                <div class="relative">
+                  {#if product.images && product.images.length > 0}
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      class="w-full h-48 object-cover"
+                    />
+                  {:else}
+                    <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
+                      <svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  {/if}
+                  
+                  {#if product.isNew}
+                    <div class="absolute top-2 right-2">
+                      <span class="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                        ¡Nuevo!
+                      </span>
+                    </div>
+                  {/if}
+                  
+                  {#if product.rating !== undefined}
+                    <div class="absolute top-2 left-2 bg-yellow-400 text-yellow-800 text-xs font-semibold px-2 py-1 rounded">
+                      {product.rating.toFixed(1)} ★
+                    </div>
+                  {/if}
+                </div>
+                
+                <div class="p-4 flex flex-col flex-grow">
+                  <div class="flex-grow">
+                    {#if product.category}
+                      <p class="text-sm text-gray-500">{product.category}</p>
+                    {/if}
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
+                    <p class="text-xl font-bold text-blue-600">{formatPrice(product.priceCents)}</p>
+                    
+                    {#if product.description}
+                      <p class="mt-2 text-sm text-gray-600 line-clamp-2">{product.description}</p>
+                    {/if}
+                  </div>
+                  
+                  <button 
+                    class={`mt-4 w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${product.stock > 0 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                    disabled={product.stock <= 0}
+                    on:click={() => product.stock > 0 && console.log('Add to cart', product._id || product.id)}
+                  >
+                    {product.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
+                  </button>
+                </div>
+              </div>
+            {/each}
+          </div>
+          
+          <!-- Paginación (opcional) -->
+          {#if filteredProducts.length > 0}
+            <div class="mt-8 flex justify-center">
+              <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button 
+                  class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  disabled={currentPage === 1}
+                  on:click={() => currentPage > 1 && (currentPage -= 1)}
+                >
+                  <span class="sr-only">Anterior</span>
+                  <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                
+                {#each Array(Math.ceil(filteredProducts.length / itemsPerPage)).fill(0) as _, i}
+                  <button
+                    class={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === i + 1 ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}`}
+                    on:click={() => currentPage = i + 1}
+                  >
+                    {i + 1}
+                  </button>
+                {/each}
+                
+                <button 
+                  class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  disabled={currentPage * itemsPerPage >= filteredProducts.length}
+                  on:click={() => currentPage += 1}
+                >
+                  <span class="sr-only">Siguiente</span>
+                  <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </nav>
+            </div>
+          {/if}
+        {/if}
+      </div>
+    </div>
+  </div>
+</main>
+
+<style>
+  /* Estilos para los controles de rango */
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 5px;
+    background: #e5e7eb;
+    border-radius: 5px;
+    background-image: linear-gradient(#3b82f6, #3b82f6);
+    background-size: 50% 100%;
+    background-repeat: no-repeat;
+  }
+
+  /* Para Chrome y Safari */
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 0 2px 0 #555;
+  }
+
+  /* Para Firefox */
+  input[type=range]::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 0 2px 0 #555;
+    border: none;
+  }
+
+  /* Para IE */
+  input[type=range]::-ms-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 0 2px 0 #555;
+  }
+  
+  /* Para el recorte de texto */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    /* Standard property for better compatibility */
+    line-clamp: 2;
+    /* Fallback for browsers that support box-orient but not line-clamp */
+    box-orient: vertical;
+  }
+</style>
