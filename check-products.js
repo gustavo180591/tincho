@@ -24,7 +24,7 @@ async function checkProducts() {
       console.log(`Nombre: ${product.name}`);
       console.log(`Estado: ${product.status}`);
       console.log(`Slug: ${product.slug}`);
-      console.log(`Precio: ${product.variants[0]?.priceCents || 0} centavos`);
+      console.log(`Precio: ${product.variants[0]?.price || 0} centavos`);
       console.log(`Stock: ${product.variants.reduce((total, v) => total + v.stock, 0)}`);
       console.log(`Imágenes: ${product.images.length}`);
       console.log(`Categorías: ${product.categories.length}`);

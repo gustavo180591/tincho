@@ -23,7 +23,7 @@
     id: string;
     productId: string;
     sku: string;
-    priceCents: number;
+    price: number;
     currency: string;
     stock: number;
     attributes?: any;
@@ -50,7 +50,7 @@
     id: string;
     name: string;
     price: number;
-    priceCents: number;
+    price: number;
     category?: string;
     description?: string;
     stock: number;
@@ -78,7 +78,7 @@
   let formData = {
     name: '',
     description: '',
-    priceCents: 0,
+    price: 0,
     stock: 0,
     status: 'DRAFT' as 'DRAFT' | 'PUBLISHED' | 'HIDDEN',
     sku: '',
@@ -134,8 +134,8 @@
   }
 
   // Format price
-  function formatPrice(priceCents: number): string {
-    const price = priceCents / 100;
+  function formatPrice(price: number): string {
+    const price = price / 100;
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS',
@@ -187,7 +187,7 @@
     formData = {
       name: '',
       description: '',
-      priceCents: 0,
+      price: 0,
       stock: 0,
       status: 'DRAFT',
       sku: '',
@@ -208,7 +208,7 @@
     formData = {
       name: product.name,
       description: product.description || '',
-      priceCents: product.priceCents,
+      price: product.price,
       stock: product.stock,
       status: product.status as 'DRAFT' | 'PUBLISHED' | 'HIDDEN',
       sku: product.sku || '',
@@ -297,7 +297,7 @@
           </a>
 
           <button
-            on:click={openCreateModal}
+            on:click={() => goto('/productos/admin/new')}
             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -416,7 +416,7 @@
                     {product.sku || '-'}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatPrice(product.priceCents)}
+                    {formatPrice(product.price)}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
@@ -437,15 +437,15 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex justify-end space-x-2">
-                      <button
-                        on:click={() => openEditModal(product)}
+                      <a
+                        href="/productos/admin/edit/{product.id}"
                         class="text-blue-600 hover:text-blue-900"
                         aria-label="Editar producto {product.name}"
                       >
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                      </button>
+                      </a>
                       <button
                         on:click={() => deleteProduct(product)}
                         class="text-red-600 hover:text-red-900"
@@ -571,11 +571,11 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label for="priceCents" class="block text-sm font-medium text-gray-700">Precio (centavos)</label>
+              <label for="price" class="block text-sm font-medium text-gray-700">Precio (centavos)</label>
               <input
                 type="number"
-                id="priceCents"
-                bind:value={formData.priceCents}
+                id="price"
+                bind:value={formData.price}
                 min="0"
                 required
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"

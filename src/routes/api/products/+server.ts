@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 // Type definitions
 interface ProductVariantInput {
   sku: string;
-  priceCents: number;
+  price: number;
   currency?: string;
   stock?: number;
   attributes?: Record<string, unknown>;
@@ -40,7 +40,7 @@ type ProductWithRelations = {
   variants: Array<{
     id: string;
     sku: string;
-    priceCents: number;
+    price: number;
     currency: string;
     stock: number;
     attributes: Prisma.JsonValue;
@@ -79,7 +79,7 @@ export async function GET() {
         id: product.id,
         _id: product.id,
         name: product.name,
-        priceCents: defaultVariant?.priceCents || 0,
+        price: defaultVariant?.price || 0,
         category: product.categories[0]?.name || 'Sin categoría',
         description: product.description || '',
         stock: product.variants.reduce((total: number, variant) => total + variant.stock, 0),
@@ -110,7 +110,7 @@ export async function POST({ request }: { request: Request }) {
 
     // Validate variants
     for (const variant of body.variants) {
-      if (!variant.sku || !variant.priceCents || variant.priceCents <= 0) {
+      if (!variant.sku || !variant.price || variant.price <= 0) {
         return json({ error: 'Invalid variant data' }, { status: 400 });
       }
     }
@@ -125,7 +125,7 @@ export async function POST({ request }: { request: Request }) {
         variants: {
           create: body.variants.map((variant: ProductVariantInput) => ({
             sku: variant.sku,
-            priceCents: variant.priceCents,
+            price: variant.price,
             currency: variant.currency || 'ARS',
             stock: variant.stock || 0,
             attributes: (variant.attributes as Prisma.JsonValue) || {},
@@ -146,7 +146,7 @@ export async function POST({ request }: { request: Request }) {
       id: newProduct.id,
       _id: newProduct.id,
       name: newProduct.name,
-      priceCents: defaultVariant?.priceCents || 0,
+      price: defaultVariant?.price || 0,
       category: newProduct.categories[0]?.name || 'Sin categoría',
       description: newProduct.description || '',
       stock: newProduct.variants.reduce((total, variant) => total + variant.stock, 0),

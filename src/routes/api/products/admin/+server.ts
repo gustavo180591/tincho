@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // Type definitions
 interface ProductVariantInput {
   sku: string;
-  priceCents: number;
+  price: number;
   currency?: string;
   stock?: number;
   attributes?: Record<string, unknown>;
@@ -17,7 +17,7 @@ interface ProductVariantInput {
 interface CreateProductRequest {
   name: string;
   description?: string;
-  priceCents: number;
+  price: number;
   stock: number;
   status?: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
   sku?: string;
@@ -94,7 +94,7 @@ export async function GET({ request }: { request: Request }) {
       return {
         id: product.id,
         name: product.name,
-        priceCents: defaultVariant?.priceCents || 0,
+        price: defaultVariant?.price || 0,
         category: product.categories[0]?.name,
         description: product.description,
         stock: product.variants.reduce((total: number, variant) => total + variant.stock, 0),
@@ -124,7 +124,7 @@ export async function POST({ request }: { request: Request }) {
     const body: CreateProductRequest = await request.json();
 
     // Validate required fields
-    if (!body.name || !body.priceCents || body.priceCents <= 0 || body.stock < 0) {
+    if (!body.name || !body.price || body.price <= 0 || body.stock < 0) {
       return json({ error: 'Missing or invalid required fields' }, { status: 400 });
     }
 
@@ -141,7 +141,7 @@ export async function POST({ request }: { request: Request }) {
         variants: {
           create: {
             sku: body.sku || `${slug}-001`,
-            priceCents: body.priceCents,
+            price: body.price,
             currency: 'ARS',
             stock: body.stock,
             attributes: {},
@@ -198,7 +198,7 @@ export async function POST({ request }: { request: Request }) {
     const productDisplay = {
       id: completeProduct.id,
       name: completeProduct.name,
-      priceCents: defaultVariant?.priceCents || 0,
+      price: defaultVariant?.price || 0,
       category: completeProduct.categories[0]?.name,
       description: completeProduct.description,
       stock: completeProduct.variants.reduce((total, variant) => total + variant.stock, 0),

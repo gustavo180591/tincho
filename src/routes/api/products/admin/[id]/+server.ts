@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 interface UpdateProductRequest {
   name?: string;
   description?: string;
-  priceCents?: number;
+  price?: number;
   stock?: number;
   status?: 'DRAFT' | 'PUBLISHED' | 'HIDDEN';
   sku?: string;
@@ -65,7 +65,7 @@ export async function PUT({ request, params }: { request: Request; params: { id:
     const body: UpdateProductRequest = await request.json();
 
     // Validate required fields
-    if (body.priceCents !== undefined && body.priceCents <= 0) {
+    if (body.price !== undefined && body.price <= 0) {
       return json({ error: 'Price must be greater than 0' }, { status: 400 });
     }
 
@@ -104,8 +104,8 @@ export async function PUT({ request, params }: { request: Request; params: { id:
     if (defaultVariant) {
       const variantUpdateData: any = {};
 
-      if (body.priceCents !== undefined) {
-        variantUpdateData.priceCents = body.priceCents;
+      if (body.price !== undefined) {
+        variantUpdateData.price = body.price;
       }
 
       if (body.stock !== undefined) {
@@ -198,7 +198,7 @@ export async function PUT({ request, params }: { request: Request; params: { id:
     const productDisplay = {
       id: completeProduct.id,
       name: completeProduct.name,
-      priceCents: defaultVariant?.priceCents || 0,
+      price: defaultVariant?.price || 0,
       category: completeProduct.categories[0]?.name,
       description: completeProduct.description,
       stock: completeProduct.variants.reduce((total, variant) => total + variant.stock, 0),

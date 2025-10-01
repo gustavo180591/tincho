@@ -1,6 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
+  // Type definitions
+  interface User {
+    id: string;
+    email: string;
+    name: string | null;
+    role: string;
+  }
+
   // Type definitions based on Prisma schema
   interface Product {
     id: string;
@@ -22,7 +30,7 @@
     id: string;
     productId: string;
     sku: string;
-    priceCents: number; // Price in cents
+    price: number; // Price in cents
     currency: string;
     stock: number;
     attributes?: any; // JSON attributes like color, size
@@ -51,7 +59,6 @@
     _id?: string; // For compatibility with existing code
     name: string;
     price: number; // Price in decimal format for display
-    priceCents: number; // Original cents from DB
     category?: string;
     description?: string;
     stock: number;
@@ -69,13 +76,13 @@
   let products: ProductDisplay[] = [];
   let loading = true;
   let error: string | null = null;
-  let currentUser: { id: string; email: string; name: string | null; role: string } | null = null;
 
   // Filter states
   let searchTerm = '';
   let selectedCategory = 'all';
   let sortBy = 'featured';
-  let priceRange = [0, 20000]; // Now represents cents (0 to 20000 cents = $0 to $200)
+    // Price range in pesos (0 to 1,000,000 = $0 to $1,000,000)
+  let priceRange = [0, 1000000];
   let showFilters = false;
   let showOnlyNew = false;
   let inStockOnly = false;
@@ -98,6 +105,9 @@
       loading = false;
     }
   }
+
+  // User state
+  let currentUser: User | null = null;
 
   // Check current user authentication
   async function checkCurrentUser() {
@@ -125,8 +135,7 @@
   $: categories = ['all', ...new Set(products.map(p => p.category).filter((c): c is string => !!c))];
 
   // Format price
-  function formatPrice(priceCents: number): string {
-    const price = priceCents / 100; // Convert cents to decimal
+  function formatPrice(price: number): string {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS',
@@ -150,7 +159,7 @@
         
         const matchesSearch = !searchTerm || nameMatch || categoryMatch;
         const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-        const matchesPrice = product.priceCents >= priceRange[0] * 100 && product.priceCents <= priceRange[1] * 100;
+        const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
         const matchesStock = !inStockOnly || (product.stock ?? 0) > 0;
         const isNew = product.isNew || 
                      (product.createdAt && 
@@ -168,9 +177,9 @@
     return [...filtered].sort((a: ProductDisplay, b: ProductDisplay): number => {
       switch (sortBy) {
         case 'price-asc':
-          return (a.priceCents || 0) - (b.priceCents || 0);
+          return (a.price || 0) - (b.price || 0);
         case 'price-desc':
-          return (b.priceCents || 0) - (a.priceCents || 0);
+          return (b.price || 0) - (a.price || 0);
         case 'rating':
           return (b.rating || 0) - (a.rating || 0);
         case 'featured':
@@ -188,7 +197,7 @@
     searchTerm = '';
     selectedCategory = 'all';
     sortBy = 'featured';
-    priceRange = [0, 20000]; // Reset to cents
+    priceRange = [0, 1000000]; // Reset to default range (0 to 1,000,000)
     inStockOnly = false;
     showOnlyNew = false;
     currentPage = 1;
@@ -445,7 +454,7 @@
                       <p class="text-sm text-gray-500">{product.category}</p>
                     {/if}
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-                    <p class="text-xl font-bold text-blue-600">{formatPrice(product.priceCents)}</p>
+                    <p class="text-xl font-bold text-blue-600">{formatPrice(product.price)}</p>
                     
                     {#if product.description}
                       <p class="mt-2 text-sm text-gray-600 line-clamp-2">{product.description}</p>

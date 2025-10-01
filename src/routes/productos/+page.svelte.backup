@@ -22,7 +22,7 @@
     id: string;
     productId: string;
     sku: string;
-    priceCents: number; // Price in cents
+    price: number; // Price in cents
     currency: string;
     stock: number;
     attributes?: any; // JSON attributes like color, size
@@ -51,7 +51,7 @@
     _id?: string; // For compatibility with existing code
     name: string;
     price: number; // Price in decimal format for display
-    priceCents: number; // Original cents from DB
+    price: number; // Original cents from DB
     category?: string;
     description?: string;
     stock: number;
@@ -107,8 +107,8 @@
   $: categories = ['all', ...new Set(products.map(p => p.category).filter((c): c is string => !!c))];
 
   // Format price
-  function formatPrice(priceCents: number): string {
-    const price = priceCents / 100; // Convert cents to decimal
+  function formatPrice(price: number): string {
+    const price = price / 100; // Convert cents to decimal
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS',
@@ -129,7 +129,7 @@
 
         const matchesSearch = !searchTerm || nameMatch || categoryMatch;
         const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-        const matchesPrice = product.priceCents >= priceRange[0] * 100 && product.priceCents <= priceRange[1] * 100;
+        const matchesPrice = product.price >= priceRange[0] * 100 && product.price <= priceRange[1] * 100;
         const matchesStock = !inStockOnly || (product.stock ?? 0) > 0;
         const isNew = product.isNew ||
                      (product.createdAt &&
@@ -147,9 +147,9 @@
     return [...filtered].sort((a: ProductDisplay, b: ProductDisplay): number => {
       switch (sortBy) {
         case 'price-asc':
-          return (a.priceCents || 0) - (b.priceCents || 0);
+          return (a.price || 0) - (b.price || 0);
         case 'price-desc':
-          return (b.priceCents || 0) - (a.priceCents || 0);
+          return (b.price || 0) - (a.price || 0);
         case 'rating':
           return (b.rating || 0) - (a.rating || 0);
         case 'featured':
@@ -421,7 +421,7 @@
                       <p class="text-sm text-gray-500">{product.category}</p>
                     {/if}
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-                    <p class="text-xl font-bold text-blue-600">{formatPrice(product.priceCents)}</p>
+                    <p class="text-xl font-bold text-blue-600">{formatPrice(product.price)}</p>
 
                     {#if product.description}
                       <p class="mt-2 text-sm text-gray-600 line-clamp-2">{product.description}</p>
@@ -758,7 +758,7 @@
                       <p class="text-sm text-gray-500">{product.category}</p>
                     {/if}
                     <h3 class="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-                    <p class="text-xl font-bold text-blue-600">{formatPrice(product.priceCents)}</p>
+                    <p class="text-xl font-bold text-blue-600">{formatPrice(product.price)}</p>
                     
                     {#if product.description}
                       <p class="mt-2 text-sm text-gray-600 line-clamp-2">{product.description}</p>

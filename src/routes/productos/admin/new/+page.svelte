@@ -16,7 +16,7 @@
 
   interface ProductVariantForm {
     sku: string;
-    priceCents: number;
+    price: number;
     stock: number;
     attributes?: any;
     isDefault: boolean;
@@ -30,7 +30,7 @@
     status: 'DRAFT',
     variants: [{
       sku: '',
-      priceCents: 0,
+      price: 0,
       stock: 0,
       isDefault: true
     }],
@@ -108,7 +108,7 @@
   function addVariant() {
     product.variants.push({
       sku: '',
-      priceCents: 0,
+      price: 0,
       stock: 0,
       isDefault: false
     });
@@ -132,8 +132,7 @@
   }
 
   // Format price for display
-  function formatPrice(priceCents: number): string {
-    const price = priceCents / 100;
+  function formatPrice(price: number): string {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS',
@@ -150,7 +149,7 @@
     for (let i = 0; i < product.variants.length; i++) {
       const variant = product.variants[i];
       if (!variant.sku.trim()) return `El SKU de la variante ${i + 1} es requerido`;
-      if (variant.priceCents <= 0) return `El precio de la variante ${i + 1} debe ser mayor a 0`;
+      if (variant.price <= 0) return `El precio de la variante ${i + 1} debe ser mayor a 0`;
       if (variant.stock < 0) return `El stock de la variante ${i + 1} no puede ser negativo`;
     }
 
@@ -159,20 +158,23 @@
 
   // Submit form
   async function submitForm() {
+    console.log('=== DEBUG: Iniciando submitForm ===');
     const validationError = validateForm();
     if (validationError) {
       error = validationError;
+      console.log('Error de validación:', validationError);
       return;
     }
 
     loading = true;
     error = null;
+    console.log('=== DEBUG: Validación exitosa, iniciando creación ===');
 
     try {
       // Create product data without images (File objects can't be JSON serialized)
       const { images, ...productData } = product;
 
-      const response = await fetch('/api/products', {
+      const response = await fetch('/api/debug/create-product', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -187,15 +189,20 @@
 
       const createdProduct = await response.json();
       success = true;
+      console.log('=== DEBUG: Producto creado exitosamente ===');
+      console.log('Redirigiendo a /productos/admin inmediatamente...');
 
-      // If there are images, upload them separately
-      if (images && images.length > 0) {
-        await uploadProductImages(createdProduct.id, images);
-      }
+      // Skip image upload for now to test redirection
+      // if (images && images.length > 0) {
+      //   console.log('Subiendo imágenes...');
+      //   await uploadProductImages(createdProduct.id, images);
+      // }
 
+      console.log('Iniciando redirección...');
       setTimeout(() => {
-        goto('/productos');
-      }, 2000);
+        console.log('Ejecutando redirección a /productos/admin');
+        goto('/productos/admin');
+      }, 1000);
 
     } catch (err) {
       error = err instanceof Error ? err.message : 'Error desconocido';
@@ -214,7 +221,7 @@
         formData.append('productId', productId);
         formData.append('position', index.toString());
 
-        const response = await fetch('/api/products/images', {
+        const response = await fetch('/api/products/images-debug', {
           method: 'POST',
           body: formData,
         });
@@ -236,13 +243,13 @@
 
   // Cancel form
   function cancelForm() {
-    goto('/productos');
+    goto('/productos/admin');
   }
 </script>
 
 <svelte:head>
-  <title>Agregar Producto - Tienda Online</title>
-  <meta name="description" content="Crear un nuevo producto" />
+  <title>Nuevo Producto - Panel de Administración</title>
+  <meta name="description" content="Crear un nuevo producto en el panel de administración" />
 </svelte:head>
 
 <main class="py-8 bg-gray-50 min-h-screen">
@@ -252,16 +259,16 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold text-gray-900 mb-2">Agregar Producto</h1>
-          <p class="text-gray-600">Crear un nuevo producto en la tienda</p>
+          <p class="text-gray-600">Crear un nuevo producto desde el panel de administración</p>
         </div>
         <button
           on:click={cancelForm}
           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
           </svg>
-          Cancelar
+          Volver al Panel
         </button>
       </div>
     </div>
@@ -484,21 +491,24 @@
                   <!-- Price -->
                   <div>
                     <label for="price-{index}" class="block text-sm font-medium text-gray-700 mb-1">
-                      Precio (en centavos) *
+                      Precio *
                     </label>
-                    <input
-                      type="number"
-                      id="price-{index}"
-                      bind:value={variant.priceCents}
-                      min="0"
-                      step="1"
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                      placeholder="25000"
-                      required
-                    />
-                    <p class="mt-1 text-xs text-gray-500">
-                      {formatPrice(variant.priceCents)}
-                    </p>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                      <input
+                        type="number"
+                        id="price-{index}"
+                        bind:value={variant.price}
+                        min="0"
+                        step="1"
+                        class="w-full pl-8 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                        placeholder="2500"
+                        required
+                      />
+                    </div>
+                    <div class="mt-1 text-xs text-gray-500">
+                      💡 Introduce el precio en pesos. Ej: 2500 para $2.500
+                    </div>
                   </div>
 
                   <!-- Stock -->
