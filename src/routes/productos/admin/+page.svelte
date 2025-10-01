@@ -135,12 +135,12 @@
 
   // Format price
   function formatPrice(price: number): string {
-    const price = price / 100;
+    const amount = price / 100;
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS',
       minimumFractionDigits: 2
-    }).format(price);
+    }).format(amount);
   }
 
   // Format date
