@@ -1,26 +1,45 @@
-# HACER.md
+# Documentación del Sistema de E-commerce
 
-Este documento define lo que el sistema de e-commerce debe hacer con el stack **SvelteKit 2 + Svelte 5, Tailwind CSS 4, Prisma, PostgreSQL, Docker, Redis (opcional), y Mercado Pago**.
+## 📋 Visión General
 
----
-
-## 🎯 Objetivo General
-Construir un sistema de e-commerce moderno, seguro y escalable que permita:
-- Gestionar productos (CRUD).
-- Ofrecer un catálogo público.
-- Manejar carrito de compras y checkout.
-- Integrar pagos con Mercado Pago.
-- Administrar órdenes y stock.
-- Proveer un panel administrativo para gestión completa.
+Este documento define los requisitos y estructura del sistema de e-commerce desarrollado con:
+- **Frontend**: SvelteKit 2 + Svelte 5
+- **Estilos**: Tailwind CSS 4
+- **Base de datos**: PostgreSQL con Prisma ORM
+- **Infraestructura**: Docker (Redis opcional)
+- **Pagos**: Integración con Mercado Pago
 
 ---
 
-## 📦 Módulos Principales
+## 🎯 Objetivos Principales
 
-### 1. Autenticación y Roles
-- Registro e inicio de sesión de usuarios.
-- Roles: **Cliente**, **Admin**, **Operador**.
-- Seguridad: contraseñas encriptadas, sesiones firmadas, CSRF protegido.
+### Funcionalidades Clave
+- [ ] Gestión completa de productos (CRUD)
+- [ ] Catálogo público con búsqueda y filtros
+- [ ] Carrito de compras y proceso de checkout
+- [ ] Integración con Mercado Pago
+- [ ] Gestión de inventario y órdenes
+- [ ] Panel administrativo
+- [ ] Sistema de autenticación y roles
+- [ ] Reseñas y valoraciones
+- [ ] Sistema de devoluciones y reembolsos
+
+---
+
+## 🔐 Autenticación y Seguridad
+
+### Roles de Usuario
+- **Cliente**: Acceso al catálogo, carrito y gestión de su cuenta
+- **Vendedor**: Gestión de productos y órdenes de su tienda
+- **Admin**: Acceso completo al sistema
+- **Operador**: Gestión de órdenes y soporte
+
+### Características de Seguridad
+- Autenticación JWT
+- Contraseñas encriptadas
+- Protección CSRF
+- Rate limiting
+- Validación de entradas
 
 ### 2. Gestión de Productos
 - Crear, leer, actualizar y eliminar productos.
@@ -116,266 +135,934 @@ Construir un sistema de e-commerce moderno, seguro y escalable que permita:
 - Documentación técnica básica (HACER.md, .env.example, README.md).
 
 
-## ✅ Creación de Rutas
+## 🌐 Rutas del Sistema
 
-### 1. Autenticación y Usuarios
+### 1. Páginas (SvelteKit)
+
+#### Público
+- [ ] `/` - Inicio / Feed
+- [ ] `/search` - Buscador con filtros
+- [ ] `/categories` - Índice de categorías
+- [ ] `/c/[slug]` - Productos por categoría
+- [ ] `/brands` - Listado de marcas
+- [ ] `/b/[slug]` - Productos por marca
+- [ ] `/p/[slug]` - Ficha de producto
+- [ ] `/stores/[slug]` - Catálogo por tienda
+- [ ] `/help` - Preguntas frecuentes
+- [ ] `/legal` - Términos y políticas
 
 #### Autenticación
-- [x] `POST /api/auth/register` (Implementado en `/src/routes/api/auth/register/+server.ts`)
-- [x] `POST /api/auth/login` (Implementado en `/src/routes/api/auth/login/+server.ts`)
-- [x] `POST /api/auth/refresh-token` (Implementado en `/src/routes/api/auth/refresh-token/+server.ts`)
-- [x] `POST /api/auth/forgot-password` (Implementado en `/src/routes/api/auth/forgot-password/+server.ts`)
-- [x] `POST /api/auth/reset-password` (Implementado en `/src/routes/api/auth/reset-password/+server.ts`)
-- [x] `GET /api/auth/me` (Implementado en `/src/routes/api/auth/me/+server.ts`)
+- [ ] `/auth/login` - Inicio de sesión
+- [ ] `/auth/register` - Registro
+- [ ] `/auth/logout` - Cerrar sesión
 
-#### Usuarios
-- [x] `GET /api/users` (Implementado en `/src/routes/api/users/+server.ts`)
-- [x] `GET /api/users/:id` (Implementado en `/src/routes/api/users/[id]/+server.ts`)
-- [x] `PUT /api/users/:id` (Implementado en `/src/routes/api/users/[id]/+server.ts`)
-- [x] `DELETE /api/users/:id` (Implementado en `/src/routes/api/users/[id]/+server.ts`)
-- [x] `GET /api/users/:id/addresses` (Implementado en `/src/routes/api/users/userId/addresses/+server.ts`)
-- [x] `POST /api/users/:id/addresses` (Implementado en `/src/routes/api/users/userId/addresses/+server.ts`)
-- [x] `PUT /api/users/:id/addresses/:addressId` (Implementado en `/src/routes/api/users/userId/addresses/[addressId]/+server.ts`)
-- [x] `DELETE /api/users/:id/addresses/:addressId` (Implementado en `/src/routes/api/users/userId/addresses/[addressId]/+server.ts`)
+#### Comprador (Buyer)
+- [ ] `/account` - Resumen de cuenta
+- [ ] `/account/profile` - Perfil de usuario
+- [ ] `/account/addresses` - Mis direcciones
+- [ ] `/account/favorites` - Productos favoritos
+- [ ] `/account/orders` - Historial de pedidos
+- [ ] `/account/orders/[id]` - Detalle de pedido
+- [ ] `/account/questions` - Mis preguntas
+- [ ] `/account/reviews` - Mis reseñas
 
-#### Perfiles
-- [x] `GET /api/sellers` (Implementado en `/src/routes/api/sellers/+server.ts`)
-- [x] `GET /api/sellers/:id` (Implementado en `/src/routes/api/sellers/[id]/+server.ts`)
-- [x] `PUT /api/sellers/:id` (Implementado en `/src/routes/api/sellers/[id]/+server.ts`)
-- [x] `GET /api/buyers/:id` (Implementado en `/src/routes/api/buyers/[id]/+server.ts`)
-- [x] `PUT /api/buyers/:id` (Implementado en `/src/routes/api/buyers/[id]/+server.ts`)
+#### Carrito y Pago
+- [ ] `/cart` - Ver carrito
+- [ ] `/checkout` - Proceso de pago
+- [ ] `/checkout/success` - Pago exitoso
+- [ ] `/checkout/failure` - Error en pago
 
-### 2. Catálogo de Productos
+#### Vendedor (Seller)
+- [ ] `/seller` - Panel de control
+- [ ] `/seller/store` - Mi tienda
+- [ ] `/seller/products` - Mis productos
+- [ ] `/seller/products/new` - Nuevo producto
+- [ ] `/seller/products/[id]` - Editar producto
+- [ ] `/seller/inventory` - Gestión de inventario
+- [ ] `/seller/orders` - Pedidos de mi tienda
+- [ ] `/seller/orders/[id]` - Detalle de pedido
+- [ ] `/seller/questions` - Preguntas de clientes
+- [ ] `/seller/promotions` - Promociones
+- [ ] `/seller/shipments` - Envíos
 
-#### Categorías
-- [x] `GET /api/categories` (Implementado en `/src/routes/api/categories/+server.ts`)
-- [x] `GET /api/categories/:id` (Implementado en `/src/routes/api/categories/[id]/+server.ts`)
-- [x] `POST /api/categories` (Implementado en `/src/routes/api/categories/+server.ts`)
-- [x] `PUT /api/categories/:id` (Implementado en `/src/routes/api/categories/[id]/+server.ts`)
-- [x] `DELETE /api/categories/:id` (Implementado en `/src/routes/api/categories/[id]/+server.ts`)
-- [x] `GET /api/categories/:id/products` (Implementado en `/src/routes/api/categories/[id]/products/+server.ts`)
+#### Administrador (Admin)
+- [ ] `/admin` - Panel de administración
+- [ ] `/admin/users` - Gestión de usuarios
+- [ ] `/admin/stores` - Gestión de tiendas
+- [ ] `/admin/categories` - Gestión de categorías
+- [ ] `/admin/brands` - Gestión de marcas
+- [ ] `/admin/orders` - Todos los pedidos
+- [ ] `/admin/reviews/moderation` - Moderación de reseñas
+- [ ] `/admin/promotions` - Gestión de promociones
 
-#### Marcas
-- [x] `GET /api/brands` (Implementado en `/src/routes/api/brands/+server.ts`)
-- [x] `GET /api/brands/:id` (Implementado en `/src/routes/api/brands/[id]/+server.ts`)
-- [x] `POST /api/brands` (Implementado en `/src/routes/api/brands/+server.ts`)
-- [x] `PUT /api/brands/:id` (Implementado en `/src/routes/api/brands/[id]/+server.ts`)
-- [x] `DELETE /api/brands/:id` (Implementado en `/src/routes/api/brands/[id]/+server.ts`)
-- [x] `GET /api/brands/:id/products` (Implementado en `/src/routes/api/brands/[id]/products/+server.ts`)
+### 2. API REST
 
-#### Productos
-- [x] `GET /api/products` (Implementado en `/src/routes/api/products/+server.ts`)
-- [x] `GET /api/products/:id` (Implementado en `/src/routes/api/products/[id]/+server.ts`)
-- [x] `POST /api/products` (Implementado en `/src/routes/api/products/+server.ts`)
-- [x] `PUT /api/products/:id` (Implementado en `/src/routes/api/products/[id]/+server.ts`)
-- [x] `DELETE /api/products/:id` (Implementado en `/src/routes/api/products/[id]/+server.ts`)
-- [x] `GET /api/products/search` (Implementado en `/src/routes/api/products/+server.ts`)
+#### Sistema / Utilidades
+- [ ] `GET /api/health` - Verificar estado del servidor
+- [ ] `GET /api/me` - Perfil del usuario autenticado
 
-#### SKUs
-- [x] `GET /api/skus/:id` (Implementado en `/src/routes/api/products/[productId]/skus/+server.ts`)
-- [x] `PUT /api/skus/:id` (Implementado en `/src/routes/api/products/[productId]/skus/+server.ts`)
-- [x] `GET /api/products/:productId/skus` (Implementado en `/src/routes/api/products/[productId]/skus/+server.ts`)
+#### Geografía
+- [ ] `GET /api/countries` - Lista de países
+- [ ] `GET /api/countries/[iso2]` - Detalles de país
+- [ ] `GET /api/countries/[iso2]/states` - Estados/Provincias
+- [ ] `GET /api/states/[id]/cities` - Ciudades
 
-#### Inventario
-- [x] `GET /api/inventory` (Implementado en `/src/routes/api/inventory/+server.ts`)
-- [x] `GET /api/inventory/:skuId` (Implementado en `/src/routes/api/inventory/[skuId]/+server.ts`)
-- [x] `PUT /api/inventory/:skuId` (Implementado en `/src/routes/api/inventory/[skuId]/+server.ts`)
-- [x] `GET /api/inventory/low-stock` (Implementado en `/src/routes/api/inventory/low-stock/+server.ts`)
+#### Catálogo
+- [ ] `GET /api/categories` - Lista de categorías
+- [ ] `GET /api/brands` - Lista de marcas
+- [ ] `GET /api/products` - Lista de productos
+- [ ] `GET /api/products/[id]` - Detalles de producto
+- [ ] `GET /api/search` - Búsqueda de productos
 
-#### Imágenes
-- [x] `POST /api/products/:productId/images` (Implementado en `/src/routes/api/products/[productId]/images/+server.ts`)
-- [x] `DELETE /api/images/:id` (Implementado en `/src/routes/api/images/[id]/+server.ts`)
-- [x] `PUT /api/images/:id/reorder` (Implementado en `/src/routes/api/products/[productId]/images/+server.ts`)
+#### Carrito y Órdenes
+- [ ] `GET /api/cart` - Ver carrito
+- [ ] `POST /api/orders` - Crear orden
+- [ ] `GET /api/orders` - Historial de órdenes
+- [ ] `GET /api/orders/[id]` - Detalle de orden
 
-### 3. Tiendas
-- [x] `GET /api/stores` (Implementado en `/src/routes/api/stores/+server.ts`)
-- [x] `GET /api/stores/:id` (Implementado en `/src/routes/api/stores/[id]/+server.ts`)
-- [x] `POST /api/stores` (Implementado en `/src/routes/api/stores/+server.ts`)
-- [x] `PUT /api/stores/:id` (Implementado en `/src/routes/api/stores/[id]/+server.ts`)
-- [x] `DELETE /api/stores/:id` (Implementado en `/src/routes/api/stores/[id]/+server.ts`)
-- [x] `GET /api/stores/:id/products` (Implementado en `/src/routes/api/stores/[id]/products/+server.ts`)
-- [x] `GET /api/stores/:id/orders` (Implementado en `/src/routes/api/stores/[id]/orders/+server.ts`)
-- [x] `GET /api/stores/:id/reviews` (Implementado en `/src/routes/api/stores/[id]/reviews/+server.ts`)
+#### Pagos y Envíos
+- [ ] `POST /api/payments` - Procesar pago
+- [ ] `POST /api/payments/webhook` - Webhook de pagos
+- [ ] `GET /api/shipments/[id]` - Seguimiento de envío
 
-### 4. Carrito y Checkout
+### 3. Convenciones
 
-#### Carrito
-- [x] `GET /api/cart` (Implementado en `/src/routes/api/cart/+server.ts`)
-- [x] `POST /api/cart/items` (Implementado en `/src/routes/api/cart/items/+server.ts`)
-- [x] `PUT /api/cart/items/:itemId` (Implementado en `/src/routes/api/cart/items/[itemId]/+server.ts`)
-- [x] `DELETE /api/cart/items/:itemId` (Implementado en `/src/routes/api/cart/items/[itemId]/+server.ts`)
-- [x] `POST /api/cart/checkout` (Implementado en `/src/routes/api/cart/+server.ts`)
+#### Parámetros de Consulta
+- `page`: Número de página (por defecto: 1)
+- `limit`: Resultados por página (máx. 60)
+- `sort`: Ordenamiento (ej: `price:asc`, `createdAt:desc`)
 
-#### Checkout
-- [x] `POST /api/checkout/shipping` (Implementado en `/src/routes/api/checkout/shipping/+server.ts`)
-- [x] `POST /api/checkout/payment` (Implementado en `/src/routes/api/checkout/payment/+server.ts`)
-- [x] `POST /api/checkout/confirm` (Implementado en `/src/routes/api/checkout/confirm/+server.ts`)
+#### Filtros Comunes
+- `q`: Término de búsqueda
+- `category`: Filtrar por categoría
+- `brand`: Filtrar por marca
+- `priceMin`/`priceMax`: Rango de precios
+- `status`: Estado (para órdenes, envíos, etc.)
 
-### 5. Órdenes
+#### Seguridad
+- Autenticación requerida para rutas protegidas
+- Validación de roles (BUYER, SELLER, ADMIN)
+- Verificación de propiedad en recursos sensibles
+- Webhooks con verificación de firma
 
-#### Órdenes
-- [x] `GET /api/orders` (Implementado en `/src/routes/api/orders/+server.ts`)
-- [x] `GET /api/orders/:id` (Implementado en `/src/routes/api/orders/[id]/+server.ts`)
-- [x] `POST /api/orders` (Implementado en `/src/routes/api/orders/+server.ts`)
-- [x] `PUT /api/orders/:id/status` (Implementado en `/src/routes/api/orders/[orderId]/status/+server.ts`)
-- [x] `GET /api/orders/user/:userId` (Implementado en `/src/routes/api/orders/user/[userId]/+server.ts`)
-- [x] `GET /api/orders/store/:storeId` (Implementado en `/src/routes/api/orders/store/[storeId]/+server.ts`)
+#### Formato de Respuesta
+```json
+{
+  "data": [],
+  "page": 1,
+  "limit": 20,
+  "total": 100
+}
+```
 
-#### Items de orden
-- [x] `GET /api/orders/:orderId/items` (Implementado en `/src/routes/api/orders/[orderId]/items/+server.ts`)
-- [x] `GET /api/order-items/:id` (Implementado en `/src/routes/api/order-items/[id]/+server.ts`)
+## 🔍 Detalles de Implementación
 
-#### Historial de estados
-- [x] `GET /api/orders/:orderId/status-history` (Implementado en `/src/routes/api/orders/[orderId]/status-history/+server.ts`)
-- [x] `POST /api/orders/:orderId/status` (Implementado en `/src/routes/api/orders/[orderId]/status/+server.ts`)
+1) Páginas (SvelteKit)
+Público (sin login)
 
-### 6. Pagos
+/ — Home / feed
 
-#### Pagos
-- [x] `GET /api/payments`
-- [x] `GET /api/payments/:id`
-- [x] `POST /api/payments`
-- [x] `POST /api/payments/:id/capture`
-- [x] `POST /api/payments/:id/refund`
-- [x] `GET /api/orders/:orderId/payments`
+/search — Buscador (q, category, brand, priceMin/Max, sort)
 
-#### Métodos de pago del usuario
-- [ ] `GET /api/user/payment-methods`
-- [ ] `POST /api/user/payment-methods`
-- [ ] `PUT /api/user/payment-methods/:id`
-- [ ] `DELETE /api/user/payment-methods/:id`
-- [ ] `SET_DEFAULT /api/user/payment-methods/:id/set-default`
+/categories — Índice de categorías (root + children)
 
-### 7. Envíos
+/c/[slug] — Grid por categoría
 
-#### Envíos
-- [x] `GET /api/shipments` (Implementado en `/src/routes/api/shipments/+server.ts`)
-- [x] `GET /api/shipments/:id` (Implementado en `/src/routes/api/shipments/[id]/+server.ts`)
-- [x] `POST /api/shipments` (Implementado en `/src/routes/api/shipments/+server.ts`)
-- [x] `PUT /api/shipments/:id/status` (Implementado en `/src/routes/api/shipments/[id]/status/+server.ts`)
-- [x] `GET /api/orders/:orderId/shipments` (Implementado en `/src/routes/api/orders/[orderId]/shipments/+server.ts`)
+/brands — Índice de marcas
 
-#### Items de envío
-- [x] `GET /api/shipments/:shipmentId/items` (Implementado en `/src/routes/api/shipments/[shipmentId]/items/+server.ts`)
+/b/[slug] — Grid por marca
 
-#### Historial de estados de envío
-- [x] `GET /api/shipments/:shipmentId/status-history` (Implementado en `/src/routes/api/shipments/[shipmentId]/status-history/+server.ts`)
+/p/[slug] — Ficha de producto: imágenes, SKUs, P&R, reviews
 
-### 8. Devoluciones y Reembolsos
+/stores/[slug] — Catálogo por tienda
 
-#### Devoluciones
-- [x] `GET /api/returns` (Implementado en `/src/routes/api/returns/+server.ts`)
-- [x] `GET /api/returns/:id` (Implementado en `/src/routes/api/returns/[id]/+server.ts`)
-- [x] `POST /api/returns` (Implementado en `/src/routes/api/returns/+server.ts`)
-- [x] `PUT /api/returns/:id/status` (Implementado en `/src/routes/api/returns/[id]/status/+server.ts`)
-- [x] `GET /api/orders/:orderId/returns` (Implementado en `/src/routes/api/orders/[orderId]/returns/+server.ts`)
+/help — Ayuda / FAQs
 
-#### Items de devolución
-- [x] `GET /api/returns/:returnId/items` (Implementado en `/src/routes/api/returns/[returnId]/items/+server.ts`)
+/legal — Términos y políticas
 
-#### Reembolsos
-- [x] `GET /api/refunds` (Implementado en `/src/routes/api/refunds/+server.ts`)
-- [x] `GET /api/refunds/:id` (Implementado en `/src/routes/api/refunds/[id]/+server.ts`)
-- [x] `POST /api/refunds` (Implementado en `/src/routes/api/refunds/+server.ts`)
+Autenticación
 
-### 9. Interacción del Usuario
+/auth/login
 
-#### Preguntas y Respuestas
-- [ ] `GET /api/products/:productId/questions`
-- [ ] `POST /api/products/:productId/questions`
-- [ ] `GET /api/questions/:id`
-- [ ] `POST /api/questions/:id/answers`
-- [ ] `PUT /api/answers/:id`
-- [ ] `DELETE /api/answers/:id`
+/auth/register
 
-#### Reseñas
-- [ ] `GET /api/products/:productId/reviews`
-- [ ] `POST /api/orders/:orderId/reviews`
-- [ ] `GET /api/reviews/:id`
-- [ ] `PUT /api/reviews/:id`
-- [ ] `DELETE /api/reviews/:id`
+/auth/logout
 
-#### Favoritos
-- [ ] `GET /api/user/favorites`
-- [ ] `POST /api/products/:productId/favorite`
-- [ ] `DELETE /api/products/:productId/favorite`
+Buyer (cuenta)
 
-### 10. Mensajería
+/account — Resumen
 
-#### Conversaciones
-- [ ] `GET /api/conversations`
-- [ ] `GET /api/conversations/:id`
-- [ ] `POST /api/conversations`
-- [ ] `GET /api/conversations/with-user/:userId`
-- [ ] `GET /api/conversations/for-product/:productId`
-- [ ] `GET /api/conversations/for-order/:orderId`
+/account/profile
 
-#### Mensajes
-- [ ] `GET /api/conversations/:conversationId/messages`
-- [ ] `POST /api/conversations/:conversationId/messages`
-- [ ] `GET /api/messages/:id`
-- [ ] `DELETE /api/messages/:id`
+/account/addresses
 
-#### Archivos adjuntos
-- [ ] `POST /api/messages/:messageId/attachments`
-- [ ] `DELETE /api/attachments/:id`
+/account/favorites
 
-### 11. Promociones y Descuentos
+/account/orders
 
-#### Promociones
-- [ ] `GET /api/promotions`
-- [ ] `GET /api/promotions/:id`
-- [ ] `POST /api/promotions`
-- [ ] `PUT /api/promotions/:id`
-- [ ] `DELETE /api/promotions/:id`
-- [ ] `POST /api/promotions/:id/apply`
-- [ ] `POST /api/promotions/validate`
+/account/orders/[id] — Detalle + tracking
 
-#### Cupones
-- [ ] `GET /api/coupons`
-- [ ] `GET /api/coupons/:code`
-- [ ] `POST /api/coupons`
-- [ ] `PUT /api/coupons/:id`
-- [ ] `DELETE /api/coupons/:id`
-- [ ] `POST /api/coupons/validate`
+/account/questions — Mis preguntas
 
-### 12. Notificaciones
+/account/reviews — Mis reseñas
 
-#### Notificaciones
-- [ ] `GET /api/notifications`
-- [ ] `GET /api/notifications/unread`
-- [ ] `GET /api/notifications/:id`
-- [ ] `PUT /api/notifications/:id/read`
-- [ ] `PUT /api/notifications/read-all`
-- [ ] `DELETE /api/notifications/:id`
+Cart & Checkout
 
-#### Preferencias de notificación
-- [ ] `GET /api/notification-preferences`
-- [ ] `PUT /api/notification-preferences`
+/cart
 
-### 13. Reportes y Análisis
+/checkout
 
-#### Reportes de ventas
-- [ ] `GET /api/reports/sales`
-- [ ] `GET /api/reports/products`
-- [ ] `GET /api/reports/categories`
-- [ ] `GET /api/reports/customers`
+/checkout/success
 
-#### Métricas del vendedor
-- [ ] `GET /api/seller/metrics`
-- [ ] `GET /api/seller/performance`
-- [ ] `GET /api/seller/inventory-report`
+/checkout/failure
 
-### 14. Configuración del Sistema
+Seller (panel)
 
-#### Configuración
-- [ ] `GET /api/settings`
-- [ ] `GET /api/settings/:key`
-- [ ] `PUT /api/settings/:key`
-- [ ] `GET /api/settings/public`
+/seller — Dashboard
 
-#### Monedas y Regiones
-- [ ] `GET /api/currencies`
-- [ ] `GET /api/countries`
-- [ ] `GET /api/countries/:countryId/states`
-- [ ] `GET /api/states/:stateId/cities`
+/seller/store
+
+/seller/products
+
+/seller/products/new
+
+/seller/products/[id]
+
+/seller/inventory
+
+/seller/orders
+
+/seller/orders/[id]
+
+/seller/questions
+
+/seller/promotions
+
+/seller/shipments
+
+Admin (opcional)
+
+/admin — Dashboard
+
+/admin/users
+
+/admin/stores
+
+/admin/categories
+
+/admin/brands
+
+/admin/orders
+
+/admin/reviews/moderation
+
+/admin/promotions
+
+2) API REST (endpoints /api/...)
+
+Convención: JSON, estado HTTP estándar, auth por rol (BUYER/SELLER/ADMIN).
+Paginación: ?page=1&limit=20 · Orden: ?sort=campo:asc|desc.
+
+Sistema / Utilidades
+
+GET /api/health — Ping DB (público)
+
+GET /api/me — Perfil autenticado (BUYER/SELLER/ADMIN)
+
+Geo (Country/State/City)
+
+GET /api/countries — Lista (con ?withStates=1 opcional)
+
+GET /api/countries/[iso2]
+
+GET /api/countries/[iso2]/states
+
+GET /api/states/[id]/cities
+
+Catálogo: Categorías / Marcas
+
+GET /api/categories — Árbol o flat (?flat=1)
+
+GET /api/categories/[slug]
+
+POST /api/categories — ADMIN
+
+PATCH /api/categories/[id] — ADMIN
+
+DELETE /api/categories/[id] — ADMIN
+
+GET /api/brands
+
+GET /api/brands/[slug]
+
+POST /api/brands — ADMIN
+
+PATCH /api/brands/[id] — ADMIN
+
+DELETE /api/brands/[id] — ADMIN
+
+Tiendas (Store)
+
+GET /api/stores — Público (básico)
+
+GET /api/stores/[id|slug] — Público
+
+POST /api/stores — SELLER (crear 1 tienda para su SellerProfile)
+
+PATCH /api/stores/[id] — SELLER (owner)
+
+GET /api/stores/[id]/products — Público (catálogo por tienda)
+
+Productos (Product) + Imágenes
+
+GET /api/products — Público (filtros: storeId, categoryId, brandId, active)
+
+GET /api/products/[id] — Público (o /api/products/by-slug/[slug])
+
+POST /api/products — SELLER (owner de la tienda)
+
+PATCH /api/products/[id] — SELLER (owner)
+
+DELETE /api/products/[id] — SELLER/ADMIN
+
+GET /api/products/[id]/images — Público
+
+POST /api/products/[id]/images — SELLER
+
+DELETE /api/products/[id]/images/[imageId] — SELLER
+
+SKUs (Sku) e Inventario
+
+GET /api/products/[id]/skus — Público (ver variantes)
+
+POST /api/products/[id]/skus — SELLER
+
+PATCH /api/skus/[skuId] — SELLER
+
+DELETE /api/skus/[skuId] — SELLER
+
+GET /api/inventory?skuId=... — SELLER (owner)
+
+PATCH /api/inventory/[id] — SELLER (ajuste stock)
+
+POST /api/inventory/bulk — SELLER (import masivo)
+
+Promociones
+
+GET /api/promotions — Público (si corresponde)
+
+GET /api/promotions/[id] — Público
+
+POST /api/promotions — SELLER/ADMIN
+
+PATCH /api/promotions/[id] — SELLER/ADMIN
+
+DELETE /api/promotions/[id] — SELLER/ADMIN
+
+POST /api/promotions/[id]/attach — SELLER/ADMIN (body: skuIds[])
+
+POST /api/promotions/[id]/detach — SELLER/ADMIN (body: skuIds[])
+
+Search (combinado catálogo)
+
+GET /api/search — Público
+Parámetros: q, category, brand, priceMin, priceMax, sort, page, limit.
+
+Preguntas & Respuestas (Question/Answer)
+
+GET /api/products/[id]/questions — Público (últimas)
+
+POST /api/products/[id]/questions — BUYER (crea pregunta)
+
+GET /api/seller/questions — SELLER (inbox propio)
+
+POST /api/questions/[qid]/answer — SELLER (responder; crea Answer)
+
+(Opcional) DELETE /api/questions/[qid] — ADMIN/SELLER(owner)
+
+Reviews
+
+GET /api/products/[id]/reviews — Público
+
+POST /api/order-items/[orderItemId]/review — BUYER (1:1 con OrderItem)
+
+GET /api/account/reviews — BUYER
+
+DELETE /api/reviews/[id] — ADMIN (moderación)
+
+Favoritos
+
+GET /api/favorites — BUYER
+
+POST /api/favorites — BUYER (body: { productId })
+
+DELETE /api/favorites/[productId] — BUYER
+
+Direcciones (Address)
+
+GET /api/addresses — BUYER
+
+POST /api/addresses — BUYER
+
+PATCH /api/addresses/[id] — BUYER (owner)
+
+DELETE /api/addresses/[id] — BUYER
+
+POST /api/addresses/[id]/make-default?type=SHIPPING|BILLING — BUYER
+
+Cart
+
+GET /api/cart — BUYER (o guest por cookie)
+
+POST /api/cart/items — BUYER/GUEST { skuId, qty, priceAt? }
+
+PATCH /api/cart/items/[id] — BUYER/GUEST { qty }
+
+DELETE /api/cart/items/[id] — BUYER/GUEST
+
+POST /api/cart/merge — BUYER (fusiona guest→user)
+
+Orders
+
+GET /api/orders — BUYER (mías) / SELLER (?storeId=...) / ADMIN
+
+POST /api/orders — BUYER (crea desde cart)
+
+GET /api/orders/[id] — BUYER/SELLER(owner)/ADMIN
+
+PATCH /api/orders/[id] — SELLER/ADMIN (estado y campos operativos)
+
+POST /api/orders/[id]/cancel — BUYER/SELLER/ADMIN (según política)
+
+Payments
+
+GET /api/orders/[id]/payments — BUYER/SELLER(owner)/ADMIN
+
+POST /api/orders/[id]/payments — BUYER (inicia transacción)
+
+POST /api/payments/webhook — Público (verifica firma; idempotente por providerRef)
+
+GET /api/payments/[id] — BUYER/SELLER(owner)/ADMIN
+
+Shipments
+
+GET /api/orders/[id]/shipment — BUYER/SELLER(owner)/ADMIN
+
+POST /api/orders/[id]/shipment — SELLER (crear etiqueta / tracking)
+
+PATCH /api/shipments/[id] — SELLER (actualizar estado/tracking)
+
+GET /api/shipments/[id] — BUYER/SELLER(owner)/ADMIN
+
+Returns (ReturnRequest)
+
+POST /api/order-items/[id]/returns — BUYER
+
+GET /api/returns — BUYER (mías) / SELLER (por storeId) / ADMIN
+
+GET /api/returns/[id] — BUYER/SELLER(owner)/ADMIN
+
+PATCH /api/returns/[id] — SELLER/ADMIN (transiciones: APPROVED/REJECTED/RECEIVED/REFUNDED)
+
+Users (perfil mínimo)
+
+GET /api/users/me — BUYER/SELLER/ADMIN
+
+PATCH /api/users/me — BUYER/SELLER/ADMIN (perfil: phone, nombres, doc)
+
+Admin (moderación / gestión)
+
+GET /api/admin/users — ADMIN
+
+PATCH /api/admin/users/[id] — ADMIN
+
+GET /api/admin/stores — ADMIN
+
+PATCH /api/admin/stores/[id] — ADMIN
+
+GET /api/admin/orders — ADMIN
+
+GET /api/admin/promotions — ADMIN
+
+PATCH /api/admin/promotions/[id] — ADMIN
+
+GET /api/admin/reviews/pending — ADMIN
+
+PATCH /api/admin/reviews/[id] — ADMIN (approve/reject)
+
+3) Convenciones y notas de implementación
+Query params estándar
+
+Paginación: page, limit (máx. 60 recomendado)
+
+Orden: sort=campo:asc|desc (usa campos indexados: updatedAt, placedAt, status, etc.)
+
+Filtros comunes:
+
+Productos: q, category, brand, storeId, active
+
+Precio (vía SKUs): priceMin, priceMax
+
+Órdenes: status, storeId, placedAt[from|to]
+
+Respuesta paginada (sugerida)
+{
+  "data": [...],
+  "page": 1,
+  "limit": 20,
+  "total": 123
+}
+
+Roles (resumen rápido)
+
+Público: read-only de catálogo, search, brands, categories, stores, products.
+
+BUYER: addresses, favorites, cart, orders propios, returns propios, reviews propios.
+
+SELLER: stores propias, products/sku/inventory/promotions de su store, orders/shipments de su store, respuestas a preguntas.
+
+ADMIN: todo lo anterior + gestión global (users, brands, categories, moderación).
+
+Seguridad
+
+Guards por rol en cada endpoint.
+
+Ownership checks:
+
+Seller: filtrar por store.seller.userId = session.user.id.
+
+Buyer: filtrar por buyerId = session.user.id (orders) o userId (addresses/favorites).
+
+Webhook payments: idempotencia por providerRef @unique.
+
+
+1) Preparación mínima (sin cambiar el schema)
+
+Variables
+
+DATABASE_URL=postgresql://gustavo:12345678@localhost:5479/tincho
+
+Comandos base
+
+npx prisma validate
+npx prisma generate          # genera el client a partir del schema existente
+# Si la BD está vacía, inicializá con tu SQL/seed (no cambia el schema)
+
+
+Client singleton
+
+// src/lib/server/db.ts
+import { PrismaClient } from '@prisma/client';
+const g = globalThis as any;
+export const prisma: PrismaClient = g.prisma ?? new PrismaClient({ log: ['warn','error'] });
+if (process.env.NODE_ENV !== 'production') g.prisma = prisma;
+
+1) Catálogo público (lecturas seguras)
+1.1 Listar productos (home/feed)
+await prisma.product.findMany({
+  where: { active: true },
+  include: { images: { take: 1 }, variations: { take: 1 } },
+  orderBy: { updatedAt: 'desc' },
+  skip, take: limit
+});
+
+1.2 Búsqueda con filtros (q / categoría / marca / precio)
+const where: any = {
+  active: true,
+  ...(q ? { title: { contains: q, mode: 'insensitive' } } : {}),
+  ...(categorySlug ? { category: { slug: categorySlug } } : {}),
+  ...(brandSlug ? { brand: { slug: brandSlug } } : {}),
+};
+const products = await prisma.product.findMany({
+  where,
+  include: {
+    images: { take: 1 },
+    variations: {
+      where: {
+        ...(priceMin ? { priceAmount: { gte: priceMin } } : {}),
+        ...(priceMax ? { priceAmount: { lte: priceMax } } : {}),
+      },
+      take: 1
+    }
+  },
+  orderBy: { updatedAt: 'desc' },
+  skip, take: limit
+});
+
+1.3 Ficha de producto
+await prisma.product.findUnique({
+  where: { slug },
+  include: {
+    images: true,
+    store: { select: { id: true, name: true, slug: true } },
+    brand: { select: { name: true, slug: true } },
+    category: { select: { name: true, slug: true } },
+    variations: true,
+    questions: {
+      orderBy: { createdAt: 'desc' }, take: 5,
+      include: { user: { select: { firstName: true, lastName: true } }, answer: true }
+    },
+    reviews: {
+      orderBy: { createdAt: 'desc' }, take: 5,
+      include: { user: { select: { firstName: true, lastName: true } } }
+    }
+  }
+});
+
+2) Alta de catálogo para Seller (sin tocar schema)
+
+Regla: el seller sólo puede operar sobre su storeId.
+
+2.1 Crear producto
+await prisma.product.create({
+  data: {
+    storeId, categoryId, brandId, title, slug, description, condition: 'NEW',
+    images: { create: images.map((i) => ({ url: i.url, alt: i.alt })) },
+    variations: {
+      create: skus.map(v => ({
+        code: v.code ?? null,
+        variantValues: v.variantValues ?? null,
+        priceAmount: v.priceAmount,
+        priceCurrency: v.priceCurrency, // enum CurrencyCode
+        listPrice: v.listPrice ?? null,
+        stock: v.stock ?? 0,
+        gtin: v.gtin ?? null
+      }))
+    }
+  }
+});
+
+2.2 Editar stock (una variante/SKU)
+await prisma.sku.update({
+  where: { id: skuId },
+  data: { stock }                // stock entero
+});
+
+2.3 Adjuntar promoción a SKUs
+// Crear promo
+const promo = await prisma.promotion.create({
+  data: { name, startsAt, endsAt, percentOff, amountOff, currencies, active: true }
+});
+// Vincular a N SKUs (tabla puente con PK compuesta)
+await prisma.promotionOnSku.createMany({
+  data: skuIds.map((skuId: string) => ({ skuId, promotionId: promo.id })),
+  skipDuplicates: true
+});
+
+3) Carrito → Orden → Pago → Envío (flujos atómicos)
+3.1 Carrito (buyer o guest vinculado luego)
+
+Agregar item (precio “congelado” en CartItem.priceAt):
+
+// upsert por cartId+skuId (tiene @@unique)
+await prisma.cartItem.upsert({
+  where: { cartId_skuId: { cartId, skuId } },
+  update: { qty: { increment: qty } },
+  create: { cartId, skuId, qty, priceAt }
+});
+
+
+Merge guest→user (cuando el usuario inicia sesión): leer carrito guest, re-insertar en el del user y borrar el guest.
+
+3.2 Crear Orden (transacción & control de stock)
+
+Objetivo: evitar sobreventa y mantener totales consistentes.
+Política sin modificar schema: validar y descontar stock por SKU al crear la orden.
+
+await prisma.$transaction(async (tx) => {
+  // 1) Leer carrito del user
+  const cart = await tx.cart.findUnique({
+    where: { id: cartId },
+    include: { items: { include: { sku: true, product: true } } }
+  });
+  if (!cart || cart.items.length === 0) throw new Error('Carrito vacío');
+
+  // 2) Chequear stock por cada SKU (optimista)
+  for (const it of cart.items) {
+    if (it.qty > it.sku.stock) throw new Error(`Sin stock SKU ${it.sku.id}`);
+  }
+
+  // 3) Descontar stock (con verificación)
+  for (const it of cart.items) {
+    await tx.sku.update({
+      where: { id: it.skuId },
+      data: { stock: { decrement: it.qty } }
+    });
+  }
+
+  // 4) Calcular totales
+  const subtotal = cart.items.reduce((s, it) => s + Number(it.priceAt) * it.qty, 0);
+  const shippingCost = 0; // calcular según negocio
+  const discount = 0;     // promos ya reflejadas en priceAt o aplicar lógica adicional
+  const total = subtotal + shippingCost - discount;
+
+  // 5) Crear orden + items
+  const nextNumber = Date.now() % 1e9; // ejemplo; en serio, vendría de tu lógica por store
+  const order = await tx.order.create({
+    data: {
+      buyerId: userId,
+      storeId,
+      number: nextNumber,
+      status: 'PENDING',
+      currency: cart.currency,
+      subtotal, discount, shippingCost, total,
+      items: {
+        create: cart.items.map((it) => ({
+          skuId: it.skuId,
+          productId: it.sku.productId,
+          title: it.product.title,
+          variant: it.sku.variantValues,
+          qty: it.qty,
+          unitPrice: it.priceAt,
+          lineTotal: Number(it.priceAt) * it.qty
+        }))
+      }
+    }
+  });
+
+  // 6) Vaciar carrito
+  await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+  return order;
+});
+
+
+Nota de concurrencia: este patrón es optimista. Para escenarios de altísima concurrencia podés:
+
+Añadir un “re-check” del stock con condición (update con where: { id, stock: { gte: qty } } vía updateMany y verificar count).
+
+O bloquear filas con SQL crudo FOR UPDATE usando tx.$queryRaw, sin tocar el schema.
+
+3.3 Pago (idempotencia con providerRef único)
+
+Iniciar pago: creás el intento y enviás al proveedor.
+
+Webhook: no crees pagos duplicados; usá providerRef @unique.
+
+// En webhook (confirmación de proveedor)
+await prisma.$transaction(async (tx) => {
+  // 1) Upsert del payment por providerRef (idempotente)
+  const payment = await tx.payment.upsert({
+    where: { providerRef: payload.id }, // único
+    update: {
+      status: payload.approved ? 'PAID' : 'REJECTED',
+      paidAt: payload.approved ? new Date() : null,
+      rawPayload: payload
+    },
+    create: {
+      orderId, provider: 'mercadopago', providerRef: payload.id,
+      status: payload.approved ? 'PAID' : 'REJECTED',
+      currency, amount, paidAt: payload.approved ? new Date() : null,
+      rawPayload: payload
+    }
+  });
+
+  // 2) Si quedó PAID, opcional: setear Order.status = PAID (si todos los pagos cubren total)
+  if (payment.status === 'PAID') {
+    await tx.order.update({
+      where: { id: orderId },
+      data: { status: 'PAID' }
+    });
+  }
+});
+
+3.4 Envío (1:1 con Orden, orderId @unique)
+// Crear etiqueta / asignar carrier
+await prisma.shipment.create({
+  data: {
+    orderId,
+    status: 'LABEL_CREATED',
+    carrier, trackingCode,
+    fromAddressId, toAddressId
+  }
+});
+
+// Actualizar tracking/estado
+await prisma.shipment.update({
+  where: { orderId },
+  data: { status: 'IN_TRANSIT', shippedAt: new Date() }
+});
+
+4) Interacción: P&R, Reviews, Devoluciones
+4.1 Preguntas & Respuestas
+// Buyer pregunta
+await prisma.question.create({
+  data: {
+    productId, userId, content, channel: 'WEB'
+  }
+});
+
+// Seller responde (1:1 con Question)
+await prisma.answer.create({
+  data: { questionId, userId: sellerUserId, content }
+});
+
+// Flag answered
+await prisma.question.update({ where: { id: questionId }, data: { answered: true } });
+
+4.2 Reviews (1 review por OrderItem)
+
+Validar que el OrderItem pertenezca al buyer y que la orden esté DELIVERED antes de permitir review.
+
+const oi = await prisma.orderItem.findFirst({
+  where: { id: orderItemId, order: { buyerId: userId, status: 'DELIVERED' } },
+  select: { id: true, productId: true }
+});
+if (!oi) throw new Error('No autorizado para reseñar este item');
+
+await prisma.review.create({
+  data: { orderItemId, userId, productId: oi.productId, rating, title, comment }
+});
+
+4.3 Devoluciones
+
+Transiciones de ReturnStatus: REQUESTED → (APPROVED|REJECTED) → RECEIVED → REFUNDED.
+
+// Buyer solicita
+await prisma.returnRequest.create({
+  data: { orderItemId, status: 'REQUESTED', reason }
+});
+
+// Seller aprueba/rechaza
+await prisma.returnRequest.update({
+  where: { id },
+  data: { status: 'APPROVED', approvedBy: sellerUserId }
+});
+
+// Recepción y reembolso (coordinado con Payment REFUNDED)
+await prisma.$transaction(async (tx) => {
+  await tx.returnRequest.update({ where: { id }, data: { status: 'RECEIVED' } });
+  // lógica de stock si corresponde (sumar stock del SKU)
+  await tx.payment.create({
+    data: { orderId, provider, providerRef, status: 'REFUNDED', currency, amount }
+  });
+  await tx.returnRequest.update({ where: { id }, data: { status: 'REFUNDED' } });
+});
+
+5) Cuenta Buyer: direcciones y favoritos
+5.1 Direcciones (máximo 1 default por tipo)
+// Crear
+await prisma.address.create({
+  data: { userId, type: 'SHIPPING', street, number, zipcode, cityId, isDefault }
+});
+
+// Setear como default (desmarcar otras del user & tipo)
+await prisma.$transaction(async (tx) => {
+  await tx.address.updateMany({ where: { userId, type: 'SHIPPING' }, data: { isDefault: false } });
+  await tx.address.update({ where: { id: addrId }, data: { isDefault: true } });
+});
+
+5.2 Favoritos (PK compuesta evita duplicados)
+// Agregar
+await prisma.favorite.create({ data: { userId, productId } });
+// Quitar
+await prisma.favorite.delete({ where: { userId_productId: { userId, productId } } });
+
+6) Panel Seller: control por storeId
+
+Todas las consultas/updates deben filtrar por la store del seller para no “ver” contenido ajeno.
+
+await prisma.product.findMany({ where: { store: { seller: { userId: sellerUserId } } } });
+
+7) Seguridad, consistencia e idempotencia (sin tocar schema)
+
+Roles/ownership en queries (where anidado)
+
+Buyer sólo ve/edita lo suyo (addresses, favorites, orders).
+
+Seller sólo su storeId y sus products/orders/shipments.
+
+Idempotencia con providerRef @unique en Payment para webhooks.
+
+Concurrencia
+
+Transacciones con $transaction.
+
+Descuento de stock en orden de compra (ver patrón de re-check).
+
+Si necesitás bloqueo fuerte: tx.$queryRaw con SELECT ... FOR UPDATE (sin cambiar schema).
+
+Estados
+
+Transiciones coherentes (no pases OrderStatus hacia atrás).
+
+Shipment 1:1 con Order (enforced por orderId @unique).
+
+Validaciones (capa app)
+
+qty > 0, priceAmount >= 0, enums válidos, slug únicos (ya enforced).
+
+8) Consultas frecuentes para analítica/UX
+8.1 Top productos por ventas (conteo de OrderItem)
+await prisma.orderItem.groupBy({
+  by: ['productId'],
+  _sum: { lineTotal: true },
+  _count: { _all: true },
+  orderBy: [{ _sum: { lineTotal: 'desc' } }],
+  take: 10
+});
+
+8.2 Rating promedio por producto (si necesitás recalcular)
+await prisma.review.groupBy({
+  by: ['productId'],
+  _avg: { rating: true },
+  orderBy: [{ _avg: { rating: 'desc' } }],
+  take: 10
+});
+
+8.3 Órdenes por estado (para dashboard)
+await prisma.order.groupBy({
+  by: ['status'],
+  _count: { _all: true }
+});
+
+9) Paginación, orden y proyección eficiente
+
+Paginación: skip/take + count (o cursor si querés estabilidad).
+
+Orden: usá campos indexados (ya tenemos varios @@index).
+
+Select/Include: pedí solo lo necesario (reduce payload y TTFB).
+
+Ejemplo:
+
+await prisma.product.findMany({
+  where: { active: true },
+  select: { id: true, title: true, slug: true, images: { select: { url: true }, take: 1 } },
+  orderBy: { updatedAt: 'desc' },
+  skip, take: limit
+});
+
+10) Backups y migraciones (sin cambiar el schema)
+
+Backups Postgres: pg_dump programado (full + dif).
+
+Restores: pg_restore a staging antes de prod.
+
+Migrations: como no vamos a modificar el schema, no generes nuevas. Si necesitás índices extra para performance, podés crearlos a nivel SQL (no en el schema) para no “tocar” schema.prisma. Ej.:
+
+-- (Opcional) índice funcional en título para búsquedas insensibles (si Postgres lo soporta)
+CREATE INDEX IF NOT EXISTS idx_product_title_ci ON "Product" (LOWER(title));
+
+
+Esto no altera el schema de Prisma, pero sí cambia la BD. Si querés evitar incluso eso, quedate con los índices ya definidos.
+
+11) Checklist por flujo (para QA)
+
+Alta producto: crea Product + al menos 1 Sku + 1 imagen → aparece en / y /search.
+
+Carrito: agrega ítems, upsert por SKU; total calculado correctamente.
+
+Orden: stock decrementa, Order.items creados con unitPrice/lineTotal.
+
+Pago: webhook idempotente, Payment único por providerRef, Order.status a PAID.
+
+Envío: Shipment creado (orderId único); transición a DELIVERED.
+
+Review: sólo si Order.status = DELIVERED y por OrderItem del buyer.
+
+Return: transiciones válidas y coherentes con Payment REFUNDED.
+
+Cierre
+
+Con esto podés operar 100% sobre la base actual: lectura de catálogo, alta de productos/SKUs, carrito→checkout transaccional, pagos idempotentes, envíos, P&R, reviews y devoluciones; todo sin tocar el schema.prisma.
