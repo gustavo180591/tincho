@@ -1,52 +1,94 @@
 <script lang="ts">
-  import ProductCard from '$lib/components/ProductCard.svelte';
   import { onMount } from 'svelte';
-  import { page } from '$app/stores';
+  // Use dynamic import for better compatibility
+let page;
+import('$app/stores').then(({ page: pageStore }) => {
+  page = pageStore;
+});
+  import { fade, fly } from 'svelte/transition';
+  import { quintOut } from 'svelte/easing';
   
   // Tipos basados en el esquema de Prisma
-  export let data: {
-    featuredProducts: Array<{
+  interface Product {
+    id: string;
+    title: string;
+    slug: string;
+    description: string | null;
+    brand: { name: string; slug: string } | null;
+    category: { name: string; slug: string } | null;
+    images: Array<{ url: string }>;
+    skus: Array<{
       id: string;
-      title: string;
-      slug: string;
-      description: string | null;
-      brand: { name: string } | null;
-      category: { name: string } | null;
-      images: Array<{ url: string }>;
-      skus: Array<{
-        id: string;
-        priceAmount: number;
-        priceCurrency: string;
-        stock: number;
-        variantValues: Record<string, string>;
-      }>;
-      ratingAvg: number;
-      ratingCount: number;
-      condition: 'NEW' | 'USED' | 'REFURBISHED';
+      priceAmount: number;
+      priceCurrency: string;
+      stock: number;
+      variantValues: Record<string, string>;
     }>;
-    categories: Array<{ id: string; name: string; slug: string }>;
-    brands: Array<{ id: string; name: string; slug: string }>;
+    ratingAvg: number;
+    ratingCount: number;
+    condition: 'NEW' | 'USED' | 'REFURBISHED';
+    createdAt?: string;
+    updatedAt?: string;
+  }
+
+  export let data: {
+    products: Product[];
+    total: number;
+    categories?: Array<{ id: string; name: string; slug: string }>;
+    brands?: Array<{ id: string; name: string; slug: string }>;
   };
 
-  // Estado para filtros
-  let selectedCategory = '';
-  let selectedBrand = '';
-  let searchQuery = '';
+  // Estados
   let isLoading = false;
+  let searchQuery = '';
+  let selectedCategories: string[] = [];
+  let selectedBrands: string[] = [];
+  let priceRange = { min: 0, max: 10000 };
+  let sortBy = 'relevance';
+  let showFilters = false;
+  let viewMode: 'grid' | 'list' = 'grid';
 
-  // Filtrar productos según los filtros seleccionados
-  $: filteredProducts = data?.featuredProducts ? data.featuredProducts.filter(product => {
-    const matchesCategory = !selectedCategory || product.category?.slug === selectedCategory;
-    const matchesBrand = !selectedBrand || product.brand?.slug === selectedBrand;
+  // Obtener productos únicos para filtros
+  $: categories = [...new Set(data.products?.map(p => p.category?.name).filter(Boolean))] as string[];
+  $: brands = [...new Set(data.products?.map(p => p.brand?.name).filter(Boolean))] as string[];
+
+  // Filtrar productos
+  $: filteredProducts = data.products ? data.products.filter(product => {
     const matchesSearch = !searchQuery || 
       product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return matchesCategory && matchesBrand && matchesSearch;
+    const matchesCategory = selectedCategories.length === 0 || 
+      (product.category && selectedCategories.includes(product.category.name));
+      
+    const matchesBrand = selectedBrands.length === 0 || 
+      (product.brand && selectedBrands.includes(product.brand.name));
+      
+    const matchesPrice = product.skus.some(sku => 
+      sku.priceAmount >= priceRange.min && sku.priceAmount <= priceRange.max
+    );
+    
+    return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
   }) : [];
 
-  // Formatear precio según la moneda
-  function formatPrice(amount: number, currency: string): string {
+  // Ordenar productos
+  $: sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch(sortBy) {
+      case 'price-asc':
+        return (a.skus[0]?.priceAmount || 0) - (b.skus[0]?.priceAmount || 0);
+      case 'price-desc':
+        return (b.skus[0]?.priceAmount || 0) - (a.skus[0]?.priceAmount || 0);
+      case 'newest':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case 'rating':
+        return (b.ratingAvg || 0) - (a.ratingAvg || 0);
+      default: // 'relevance'
+        return 0;
+    }
+  });
+
+  // Formatear precio
+  function formatPrice(amount: number, currency: string = 'ARS'): string {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency,

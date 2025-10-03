@@ -1,34 +1,79 @@
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { prisma } from '$lib/db';
+import { errors, success } from '$lib/api/response';
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '$env/static/private';
+import type { RequestHandler } from '@sveltejs/kit';
+
+type JwtPayload = {
+  userId: string;
+  email: string;
+  role: string;
+  iat: number;
+  exp: number;
+};
 
 // GET /api/auth/me
-export async function GET({ cookies }: Parameters<RequestHandler>[0]) {
+export const GET: RequestHandler = async ({ cookies }) => {
   try {
-    const sessionId = cookies.get('session');
+    const accessToken = cookies.get('accessToken');
 
-    if (!sessionId) {
-      return json({ user: null }, { status: 401 });
+    if (!accessToken) {
+      return errors.unauthorized('No authentication token provided');
     }
 
-    // Get session from memory
-    globalThis.userSessions = globalThis.userSessions || new Map();
-    const session = globalThis.userSessions.get(sessionId);
-
-    if (!session) {
-      return json({ user: null }, { status: 401 });
-    }
-
-    return json({
-      user: {
-        id: session.userId,
-        email: session.email,
-        name: session.name,
-        role: session.role
+    // Verificar el token JWT
+    const decoded = jwt.verify(accessToken, JWT_SECRET) as JwtPayload;
+    
+    // Obtener información del usuario desde la base de datos
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        phone: true,
+        docType: true,
+        docNumber: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true
       }
     });
 
+    if (!user) {
+      return errors.notFound('User not found');
+    }
+
+    return success({
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        fullName: `${user.firstName} ${user.lastName}`.trim(),
+        role: user.role,
+        phone: user.phone || null,
+        docType: user.docType || null,
+        docNumber: user.docNumber || null,
+        avatar: user.avatar || null,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString()
+      }
+    });
   } catch (error) {
-    console.error('Get user error:', error);
-    return json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error in /api/auth/me:', error);
+    
+    if (error instanceof jwt.TokenExpiredError) {
+      return errors.unauthorized('Token expired');
+    } 
+    
+    if (error instanceof jwt.JsonWebTokenError) {
+      return errors.unauthorized('Invalid token');
+    }
+    
+    return errors.internalServerError('Error fetching user data');
   }
-}
+};

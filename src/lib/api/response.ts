@@ -1,5 +1,4 @@
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
 
 type SuccessResponse<T = any> = {
   success: true;
@@ -51,15 +50,17 @@ export function error(
 // Common error responses
 export const errors = {
   notFound: (resource = 'Resource') =>
-    error('not_found', `${resource} not found`, 404),
-  unauthorized: () =>
-    error('unauthorized', 'Authentication required', 401),
+    error('NOT_FOUND', `${resource} not found`, 404),
+  unauthorized: (message = 'Authentication required') =>
+    error('UNAUTHORIZED', message, 401),
   forbidden: () =>
-    error('forbidden', 'Insufficient permissions', 403),
+    error('FORBIDDEN', 'You do not have permission to access this resource', 403),
+  badRequest: (message = 'Bad request', details?: any) =>
+    error('BAD_REQUEST', message, 400, details),
   invalidRequest: (details?: any) =>
-    error('invalid_request', 'Invalid request', 400, details),
-  internalServerError: () =>
-    error('server_error', 'Internal server error', 500),
+    error('INVALID_REQUEST', 'Invalid request data', 400, details),
+  internalServerError: (message = 'An unexpected error occurred') =>
+    error('INTERNAL_SERVER_ERROR', message, 500)
 };
 
 // Auth middleware

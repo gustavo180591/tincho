@@ -1,5 +1,5 @@
 // ------------------------------------------------------
-// Prisma Schema — Marketplace estilo Mercado Libre
+// Prisma Schema — Marketplace estilo Mercado Libre (tincho)
 // DB: PostgreSQL
 // ------------------------------------------------------
 
@@ -98,7 +98,7 @@ model Country {
   id             String          @id @default(uuid()) @db.Uuid
   iso2           String          @unique @db.Char(2)
   name           String
-  currencies     CurrencyCode[] // enum array (PostgreSQL)
+  currencies     CurrencyCode[]  // enum array (PostgreSQL)
   states         State[]
   sellerProfiles SellerProfile[]
   stores         Store[]
@@ -114,6 +114,8 @@ model State {
   name      String
   cities    City[]
   country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())     // añadido para trazabilidad
+  updatedAt DateTime @updatedAt          // añadido para trazabilidad
   @@index([countryId, code])
 }
 
@@ -123,6 +125,8 @@ model City {
   name      String
   state     State     @relation(fields: [stateId], references: [id], onDelete: Cascade)
   addresses Address[]
+  createdAt DateTime  @default(now())     // añadido para trazabilidad
+  updatedAt DateTime  @updatedAt          // añadido para trazabilidad
   @@index([stateId, name])
 }
 
@@ -146,29 +150,30 @@ model User {
   answers      Answer[]
   reviews      Review[]
   orders       Order[]        @relation("OrderBuyer")
+  createdAt    DateTime       @default(now())   // añadido para auditoría
   updatedAt    DateTime       @updatedAt
   @@index([role])
 }
 
 model Address {
-  id             String     @id @default(uuid()) @db.Uuid
-  userId         String     @db.Uuid
+  id             String      @id @default(uuid()) @db.Uuid
+  userId         String      @db.Uuid
   label          String?
   type           AddressType @default(SHIPPING)
   street         String
   number         String?
   zipcode        String?
   reference      String?
-  cityId         String?    @db.Uuid
-  city           City?      @relation(fields: [cityId], references: [id])
-  latitude       Decimal?   @db.Decimal(9,6)
-  longitude      Decimal?   @db.Decimal(9,6)
-  isDefault      Boolean    @default(false)
-  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shippingFrom   Shipment[] @relation("ShipFrom")
-  shippingTo     Shipment[] @relation("ShipTo")
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  cityId         String?     @db.Uuid
+  city           City?       @relation(fields: [cityId], references: [id])
+  latitude       Decimal?    @db.Decimal(9,6)
+  longitude      Decimal?    @db.Decimal(9,6)
+  isDefault      Boolean     @default(false)
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingFrom   Shipment[]  @relation("ShipFrom")
+  shippingTo     Shipment[]  @relation("ShipTo")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
   @@index([userId, type, isDefault])
 }
 
@@ -326,11 +331,10 @@ model Promotion {
 }
 
 model PromotionOnSku {
-  skuId       String   @db.Uuid
-  promotionId String   @db.Uuid
-  sku         Sku      @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  skuId       String    @db.Uuid
+  promotionId String    @db.Uuid
+  sku         Sku       @relation(fields: [skuId], references: [id], onDelete: Cascade)
   promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-  
   @@id([skuId, promotionId])
   @@map("promotion_on_sku")
 }
@@ -365,7 +369,7 @@ model Review {
   orderItemId String    @unique @db.Uuid
   userId      String    @db.Uuid
   productId   String    @db.Uuid
-  rating      Int       // 1..5
+  rating      Int
   title       String?
   comment     String?
   createdAt   DateTime  @default(now())
@@ -376,8 +380,8 @@ model Review {
 }
 
 model Favorite {
-  userId    String  @db.Uuid
-  productId String  @db.Uuid
+  userId    String   @db.Uuid
+  productId String   @db.Uuid
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -503,6 +507,3 @@ model ReturnRequest {
   @@index([status, createdAt])
   @@map("return_requests")
 }
-
-// -------------------- Missing Models -------------------
-// Brand and PromotionOnSku models are already defined elsewhere in the schema
