@@ -140,60 +140,60 @@ Este documento define los requisitos y estructura del sistema de e-commerce desa
 ### 1. Páginas (SvelteKit)
 
 #### Público
-- [ ] `/` - Inicio / Feed
-- [ ] `/search` - Buscador con filtros
-- [ ] `/categories` - Índice de categorías
-- [ ] `/c/[slug]` - Productos por categoría
-- [ ] `/brands` - Listado de marcas
-- [ ] `/b/[slug]` - Productos por marca
-- [ ] `/p/[slug]` - Ficha de producto
-- [ ] `/stores/[slug]` - Catálogo por tienda
-- [ ] `/help` - Preguntas frecuentes
-- [ ] `/legal` - Términos y políticas
+- [x] `/` - Inicio / Feed
+- [x] `/search` - Buscador con filtros
+- [x] `/categories` - Índice de categorías
+- [x] `/c/[slug]` - Productos por categoría
+- [x] `/brands` - Listado de marcas
+- [x] `/b/[slug]` - Productos por marca
+- [x] `/p/[slug]` - Ficha de producto
+- [x] `/stores/[slug]` - Catálogo por tienda
+- [x] `/help` - Preguntas frecuentes
+- [x] `/legal` - Términos y políticas
 
 #### Autenticación
-- [ ] `/auth/login` - Inicio de sesión
-- [ ] `/auth/register` - Registro
-- [ ] `/auth/logout` - Cerrar sesión
+- [x] `/auth/login` - Inicio de sesión
+- [x] `/auth/register` - Registro
+- [x] `/auth/logout` - Cerrar sesión
 
 #### Comprador (Buyer)
-- [ ] `/account` - Resumen de cuenta
-- [ ] `/account/profile` - Perfil de usuario
-- [ ] `/account/addresses` - Mis direcciones
-- [ ] `/account/favorites` - Productos favoritos
-- [ ] `/account/orders` - Historial de pedidos
-- [ ] `/account/orders/[id]` - Detalle de pedido
-- [ ] `/account/questions` - Mis preguntas
-- [ ] `/account/reviews` - Mis reseñas
+- [x] `/account` - Resumen de cuenta
+- [x] `/account/profile` - Perfil de usuario
+- [x] `/account/addresses` - Mis direcciones
+- [x] `/account/favorites` - Productos favoritos
+- [x] `/account/orders` - Historial de pedidos
+- [x] `/account/orders/[id]` - Detalle de pedido
+- [x] `/account/questions` - Mis preguntas
+- [x] `/account/reviews` - Mis reseñas
 
 #### Carrito y Pago
-- [ ] `/cart` - Ver carrito
-- [ ] `/checkout` - Proceso de pago
-- [ ] `/checkout/success` - Pago exitoso
-- [ ] `/checkout/failure` - Error en pago
+- [x] `/cart` - Ver carrito
+- [x] `/checkout` - Proceso de pago
+- [x] `/checkout/success` - Pago exitoso
+- [x] `/checkout/failure` - Error en pago
 
 #### Vendedor (Seller)
-- [ ] `/seller` - Panel de control
-- [ ] `/seller/store` - Mi tienda
-- [ ] `/seller/products` - Mis productos
-- [ ] `/seller/products/new` - Nuevo producto
-- [ ] `/seller/products/[id]` - Editar producto
-- [ ] `/seller/inventory` - Gestión de inventario
-- [ ] `/seller/orders` - Pedidos de mi tienda
-- [ ] `/seller/orders/[id]` - Detalle de pedido
-- [ ] `/seller/questions` - Preguntas de clientes
-- [ ] `/seller/promotions` - Promociones
-- [ ] `/seller/shipments` - Envíos
+- [x] `/seller` - Panel de control
+- [x] `/seller/store` - Mi tienda
+- [x] `/seller/products` - Mis productos
+- [x] `/seller/products/new` - Nuevo producto
+- [x] `/seller/products/[id]` - Editar producto
+- [x] `/seller/inventory` - Gestión de inventario
+- [x] `/seller/orders` - Pedidos de mi tienda
+- [x] `/seller/orders/[id]` - Detalle de pedido
+- [x] `/seller/questions` - Preguntas de clientes
+- [x] `/seller/promotions` - Promociones
+- [x] `/seller/shipments` - Envíos
 
 #### Administrador (Admin)
-- [ ] `/admin` - Panel de administración
-- [ ] `/admin/users` - Gestión de usuarios
-- [ ] `/admin/stores` - Gestión de tiendas
-- [ ] `/admin/categories` - Gestión de categorías
-- [ ] `/admin/brands` - Gestión de marcas
-- [ ] `/admin/orders` - Todos los pedidos
-- [ ] `/admin/reviews/moderation` - Moderación de reseñas
-- [ ] `/admin/promotions` - Gestión de promociones
+- [x] `/admin` - Panel de administración
+- [x] `/admin/users` - Gestión de usuarios
+- [x] `/admin/stores` - Gestión de tiendas
+- [x] `/admin/categories` - Gestión de categorías
+- [x] `/admin/brands` - Gestión de marcas
+- [x] `/admin/orders` - Todos los pedidos
+- [x] `/admin/reviews/moderation` - Moderación de reseñas
+- [x] `/admin/promotions` - Gestión de promociones
 
 ### 2. API REST
 
